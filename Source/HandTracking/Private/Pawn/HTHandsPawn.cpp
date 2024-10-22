@@ -137,7 +137,7 @@ void AHTHandsPawn::OnRightHandSphereOverlapBegin(UPrimitiveComponent* Overlapped
 	{
 		if (Result->Spheres.Find(Cast<USphereComponent>(OverlappedComponent)) != INDEX_NONE)
 		{
-			// Sphere is already there idk how we got here
+			// Sphere is already there IDK how we got here
 		}
 		else
 		{
@@ -146,6 +146,13 @@ void AHTHandsPawn::OnRightHandSphereOverlapBegin(UPrimitiveComponent* Overlapped
 
 		if (Result->Spheres.Num() > 3)
 		{
+			for (const auto Component : OtherActor->GetComponents())
+			{
+				if (UPrimitiveComponent* Comp = Cast<UPrimitiveComponent>(Component))
+				{
+					//Comp->SetSimulatePhysics(false);
+				}
+			}
 			OtherActor->AttachToComponent(MotionControllerRight, FAttachmentTransformRules::KeepWorldTransform);
 		}
 	}
@@ -168,7 +175,7 @@ void AHTHandsPawn::OnRightHandSphereOverlapEnd(UPrimitiveComponent* OverlappedCo
 			if (Result->Spheres.Num() < 3)
 			{
 				OtherActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-				for (auto Component : OtherActor->GetComponents())
+				for (const auto Component : OtherActor->GetComponents())
 				{
 					if (UPrimitiveComponent* Comp = Cast<UPrimitiveComponent>(Component))
 					{
@@ -188,7 +195,7 @@ void AHTHandsPawn::OnLeftHandSphereOverlapBegin(UPrimitiveComponent* OverlappedC
 	{
 		if (Result->Spheres.Find(Cast<USphereComponent>(OverlappedComponent)) != INDEX_NONE)
 		{
-			// Sphere is already there idk how we got here
+			// Sphere is already there IDK how we got here
 		}
 		else
 		{
@@ -197,6 +204,13 @@ void AHTHandsPawn::OnLeftHandSphereOverlapBegin(UPrimitiveComponent* OverlappedC
 
 		if (Result->Spheres.Num() > 3)
 		{
+			for (const auto Component : OtherActor->GetComponents())
+			{
+				if (UPrimitiveComponent* Comp = Cast<UPrimitiveComponent>(Component))
+				{
+					//Comp->SetSimulatePhysics(false);
+				}
+			}
 			OtherActor->AttachToComponent(MotionControllerLeft, FAttachmentTransformRules::KeepWorldTransform);
 		}
 	}
@@ -219,7 +233,7 @@ void AHTHandsPawn::OnLeftHandSphereOverlapEnd(UPrimitiveComponent* OverlappedCom
 			if (Result->Spheres.Num() < 3)
 			{
 				OtherActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-				for (auto Component : OtherActor->GetComponents())
+				for (const auto Component : OtherActor->GetComponents())
 				{
 					if (UPrimitiveComponent* Comp = Cast<UPrimitiveComponent>(Component))
 					{
