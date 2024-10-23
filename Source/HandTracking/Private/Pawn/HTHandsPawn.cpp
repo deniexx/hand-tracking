@@ -7,6 +7,7 @@
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "MotionControllerComponent.h"
 #include "SphereComponent.h"
+#include "../../../../Plugins/SerialCOM/Source/SERIALCOM/Public/SerialCom.h"
 #include "Camera/CameraComponent.h"
 
 // Sets default values
@@ -102,6 +103,13 @@ void AHTHandsPawn::BeginPlay()
 	
 	UHeadMountedDisplayFunctionLibrary::SetTrackingOrigin(EHMDTrackingOrigin::Stage);
 
+	bool bSuccess = false;
+	SerialCom = USerialCom::OpenComPort(bSuccess, 3, 9600);
+	if (!SerialCom || !bSuccess)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to open SerialCom"));
+	}
+
 	for (auto Sphere : RightHandSpheres)
 	{
 		Sphere->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnRightHandSphereOverlapBegin);
@@ -113,6 +121,17 @@ void AHTHandsPawn::BeginPlay()
 		Sphere->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnLeftHandSphereOverlapBegin);
 		Sphere->OnComponentEndOverlap.AddDynamic(this, &ThisClass::OnLeftHandSphereOverlapEnd);
 	}
+}
+
+void AHTHandsPawn::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (SerialCom)
+	{
+		SerialCom->Close();
+		SerialCom = nullptr;
+	}
+	
+	Super::EndPlay(EndPlayReason);
 }
 
 // Called every frame
@@ -154,6 +173,12 @@ void AHTHandsPawn::OnRightHandSphereOverlapBegin(UPrimitiveComponent* Overlapped
 				}
 			}
 			OtherActor->AttachToComponent(MotionControllerRight, FAttachmentTransformRules::KeepWorldTransform);
+
+			if (SerialCom)
+			{
+				TArray<uint8> Bytes = {0, 255};
+				SerialCom->WriteBytes(Bytes);
+			}
 		}
 	}
 	else
@@ -181,6 +206,12 @@ void AHTHandsPawn::OnRightHandSphereOverlapEnd(UPrimitiveComponent* OverlappedCo
 					{
 						//Comp->SetSimulatePhysics(true);
 					}
+				}
+
+				if (SerialCom)
+				{
+					TArray<uint8> Bytes = {0, 0};
+					SerialCom->WriteBytes(Bytes);
 				}
 			}
 		}
