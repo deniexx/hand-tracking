@@ -10,7 +10,6 @@ class USphereComponent;
 class UCameraComponent;
 class UMotionControllerComponent;
 class UOculusXRHandComponent;
-class USerialCom;
 
 USTRUCT(BlueprintType)
 struct FHandSphereList
@@ -32,9 +31,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
+	
 	UFUNCTION()
 	void OnRightHandSphereOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
@@ -104,8 +101,6 @@ private:
 
 	UPROPERTY()
 	TMap<AActor*, FHandSphereList> ActorsToPointOfContacts;
-
-	TObjectPtr<USerialCom> SerialCom;
 	
 public:	
 	// Called every frame

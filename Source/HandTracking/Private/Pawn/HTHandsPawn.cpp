@@ -7,8 +7,9 @@
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "MotionControllerComponent.h"
 #include "SphereComponent.h"
-#include "../../../../Plugins/SerialCOM/Source/SERIALCOM/Public/SerialCom.h"
 #include "Camera/CameraComponent.h"
+#include "System/HTBlueprintFunctionLibrary.h"
+#include "System/HTFeedbackSubsystem.h"
 
 // Sets default values
 AHTHandsPawn::AHTHandsPawn()
@@ -103,13 +104,6 @@ void AHTHandsPawn::BeginPlay()
 	
 	UHeadMountedDisplayFunctionLibrary::SetTrackingOrigin(EHMDTrackingOrigin::Stage);
 
-	bool bSuccess = false;
-	SerialCom = USerialCom::OpenComPort(bSuccess, 3, 9600);
-	if (!SerialCom || !bSuccess)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Failed to open SerialCom"));
-	}
-
 	for (auto Sphere : RightHandSpheres)
 	{
 		Sphere->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnRightHandSphereOverlapBegin);
@@ -121,17 +115,6 @@ void AHTHandsPawn::BeginPlay()
 		Sphere->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnLeftHandSphereOverlapBegin);
 		Sphere->OnComponentEndOverlap.AddDynamic(this, &ThisClass::OnLeftHandSphereOverlapEnd);
 	}
-}
-
-void AHTHandsPawn::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	if (SerialCom)
-	{
-		SerialCom->Close();
-		SerialCom = nullptr;
-	}
-	
-	Super::EndPlay(EndPlayReason);
 }
 
 // Called every frame
@@ -173,12 +156,11 @@ void AHTHandsPawn::OnRightHandSphereOverlapBegin(UPrimitiveComponent* Overlapped
 				}
 			}
 			OtherActor->AttachToComponent(MotionControllerRight, FAttachmentTransformRules::KeepWorldTransform);
-
-			if (SerialCom)
-			{
-				TArray<uint8> Bytes = {0, 255};
-				SerialCom->WriteBytes(Bytes);
-			}
+			FHandFeedbackConfig Config;
+			Config.Hand = ETargetHand::Right;
+			Config.Location = ETargetHandLocation::Thumb;
+			Config.NormalizedStrength = 1.f;
+			UHTBlueprintFunctionLibrary::ApplyHandFeedback(this, Config);
 		}
 	}
 	else
@@ -206,12 +188,6 @@ void AHTHandsPawn::OnRightHandSphereOverlapEnd(UPrimitiveComponent* OverlappedCo
 					{
 						//Comp->SetSimulatePhysics(true);
 					}
-				}
-
-				if (SerialCom)
-				{
-					TArray<uint8> Bytes = {0, 0};
-					SerialCom->WriteBytes(Bytes);
 				}
 			}
 		}
@@ -243,6 +219,11 @@ void AHTHandsPawn::OnLeftHandSphereOverlapBegin(UPrimitiveComponent* OverlappedC
 				}
 			}
 			OtherActor->AttachToComponent(MotionControllerLeft, FAttachmentTransformRules::KeepWorldTransform);
+			FHandFeedbackConfig Config;
+			Config.Hand = ETargetHand::Left;
+			Config.Location = ETargetHandLocation::Thumb;
+			Config.NormalizedStrength = 1.f;
+			UHTBlueprintFunctionLibrary::ApplyHandFeedback(this, Config);
 		}
 	}
 	else
