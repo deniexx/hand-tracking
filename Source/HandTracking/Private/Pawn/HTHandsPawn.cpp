@@ -5,9 +5,11 @@
 
 #include "OculusXRHandComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
+#include "IContentBrowserSingleton.h"
 #include "MotionControllerComponent.h"
 #include "SphereComponent.h"
 #include "Camera/CameraComponent.h"
+#include "HandTracking/HandTracking.h"
 #include "System/HTBlueprintFunctionLibrary.h"
 #include "System/HTFeedbackSubsystem.h"
 
@@ -160,6 +162,7 @@ void AHTHandsPawn::OnRightHandSphereOverlapBegin(UPrimitiveComponent* Overlapped
 			Config.Hand = ETargetHand::Right;
 			Config.Location = ETargetHandLocation::Thumb;
 			Config.NormalizedStrength = 1.f;
+			Config.Duration = 0.5f;
 			UHTBlueprintFunctionLibrary::ApplyHandFeedback(this, Config);
 		}
 	}
@@ -168,6 +171,19 @@ void AHTHandsPawn::OnRightHandSphereOverlapBegin(UPrimitiveComponent* Overlapped
 		FHandSphereList List;
 		List.Spheres.Add(Cast<USphereComponent>(OverlappedComponent));
 		ActorsToPointOfContacts.Add(OtherActor, List);
+	}
+
+	for (int Idx = 0; Idx < RightHandSpheres.Num(); ++Idx)
+	{
+		if (Cast<USphereComponent>(OverlappedComponent) == RightHandSpheres[Idx])
+		{
+			FHandFeedbackConfig Config;
+			Config.Hand = ETargetHand::Right;
+			Config.Location = (ETargetHandLocation)Idx;
+			Config.NormalizedStrength = 1.f;
+			Config.Duration = 0.5f;
+			UHTBlueprintFunctionLibrary::ApplyHandFeedback(this, Config);
+		}
 	}
 }
 
@@ -223,6 +239,7 @@ void AHTHandsPawn::OnLeftHandSphereOverlapBegin(UPrimitiveComponent* OverlappedC
 			Config.Hand = ETargetHand::Left;
 			Config.Location = ETargetHandLocation::Thumb;
 			Config.NormalizedStrength = 1.f;
+			Config.Duration = 3.f;
 			UHTBlueprintFunctionLibrary::ApplyHandFeedback(this, Config);
 		}
 	}

@@ -36,5 +36,8 @@ struct FHandFeedbackConfig
 
 	// Strength in 0-1
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float NormalizedStrength;
+	float NormalizedStrength = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Duration = 0.f;
 };

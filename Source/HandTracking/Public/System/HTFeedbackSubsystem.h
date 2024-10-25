@@ -28,8 +28,21 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "HTFeedbackSubsystem")
 	void ApplyFeedback(const FHandFeedbackConfig& Config);
+
+private:
+
+	void SendFeedback(USerialCom* Com, const FHandFeedbackConfig& Config) const;
 	
 private:
 
+	// @NOTE (Denis): Unsure if these are required, but they make sure that there is at least 20ms delay between feedback to hands, might need to change this to be per finger, rather than per hand 
+	double LastFeedbackTimeLeft = 0;
+	double LastFeedbackTimeRight = 0;
+	static constexpr double MinDelayTime = 0.02;
+
+	UPROPERTY()
 	TObjectPtr<USerialCom> RightHandSerialCom;
+
+	UPROPERTY()
+	TObjectPtr<USerialCom> LeftHandSerialCom;
 };
