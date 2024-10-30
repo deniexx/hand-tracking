@@ -20,6 +20,8 @@ struct FHandSphereList
 	TArray<USphereComponent*> Spheres;
 };
 
+typedef TMap<ETargetHandLocation, AActor*> ActorGrabMap;
+
 UCLASS()
 class HANDTRACKING_API AHTHandsPawn : public APawn
 {
@@ -28,14 +30,17 @@ class HANDTRACKING_API AHTHandsPawn : public APawn
 public:
 	// Sets default values for this pawn's properties
 	AHTHandsPawn();
+	
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
+
+	// Called to bind functionality to input
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
-	void DoFeedback(ETargetHand Hand, ETargetHandLocation Location, float Duration);
-	bool TraceFinger(UOculusXRHandComponent* HandComponent, FName SocketName, const TArray<AActor*>& IgnoredActors, bool bDrawDebug, FHitResult& OutResult) const;
-
+	
 protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components)
@@ -58,16 +63,17 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = HandTrackingSettings)
 	float TraceSphereRadius = 1.f;
-	
+
 private:
 
-	
-	
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	void DoFeedback(ETargetHand Hand, ETargetHandLocation Location, float Duration) const;
+	bool TraceFinger(UOculusXRHandComponent* HandComponent, FName SocketName, const TArray<AActor*>& IgnoredActors, bool bDrawDebug, FHitResult& OutResult) const;
+	void TryGrabItem(ActorGrabMap& GrabMap, ETargetHandLocation Location, const FHitResult& HitResult) const;
+	void TryReleaseItem(ActorGrabMap& GrabMap, ETargetHandLocation Location);
 
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+private:
+	
+	ActorGrabMap GrabMapLeft;
+	ActorGrabMap GrabMapRight;
 
 };
