@@ -61,7 +61,7 @@ protected:
 	
 private:
 
-	float FeedbackCooldown = 0.25f;
+	
 	
 public:	
 	// Called every frame

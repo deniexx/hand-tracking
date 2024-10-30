@@ -19,17 +19,17 @@ void UHTFeedbackSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	}
 
 	const double TimeSeconds = GetWorld()->GetTimeSeconds();
-	FingerToLastTimeFeedbackSentLeft.Add({ ETargetHandLocation::Thumb, TimeSeconds });
-	FingerToLastTimeFeedbackSentLeft.Add({ ETargetHandLocation::Index, TimeSeconds });
-	FingerToLastTimeFeedbackSentLeft.Add({ ETargetHandLocation::Middle, TimeSeconds });
-	FingerToLastTimeFeedbackSentLeft.Add({ ETargetHandLocation::Ring, TimeSeconds });
-	FingerToLastTimeFeedbackSentLeft.Add({ ETargetHandLocation::Pinky, TimeSeconds });
+	FingerToTimeToSendLeft.Add({ ETargetHandLocation::Thumb, TimeSeconds });
+	FingerToTimeToSendLeft.Add({ ETargetHandLocation::Index, TimeSeconds });
+	FingerToTimeToSendLeft.Add({ ETargetHandLocation::Middle, TimeSeconds });
+	FingerToTimeToSendLeft.Add({ ETargetHandLocation::Ring, TimeSeconds });
+	FingerToTimeToSendLeft.Add({ ETargetHandLocation::Pinky, TimeSeconds });
 
-	FingerToLastTimeFeedbackSentRight.Add({ ETargetHandLocation::Thumb, TimeSeconds });
-	FingerToLastTimeFeedbackSentRight.Add({ ETargetHandLocation::Index, TimeSeconds });
-	FingerToLastTimeFeedbackSentRight.Add({ ETargetHandLocation::Middle, TimeSeconds });
-	FingerToLastTimeFeedbackSentRight.Add({ ETargetHandLocation::Ring, TimeSeconds });
-	FingerToLastTimeFeedbackSentRight.Add({ ETargetHandLocation::Pinky, TimeSeconds });
+	FingerToTimeToSendRight.Add({ ETargetHandLocation::Thumb, TimeSeconds });
+	FingerToTimeToSendRight.Add({ ETargetHandLocation::Index, TimeSeconds });
+	FingerToTimeToSendRight.Add({ ETargetHandLocation::Middle, TimeSeconds });
+	FingerToTimeToSendRight.Add({ ETargetHandLocation::Ring, TimeSeconds });
+	FingerToTimeToSendRight.Add({ ETargetHandLocation::Pinky, TimeSeconds });
 
 	/* @TODO (Denis): Uncomment when left hand will be used
 	LeftHandSerialCom = USerialCom::OpenComPort(bSuccess, 4, 9600);
@@ -46,6 +46,11 @@ void UHTFeedbackSubsystem::Deinitialize()
 		RightHandSerialCom->Close();
 	}
 
+	if (LeftHandSerialCom)
+	{
+		LeftHandSerialCom->Close();
+	}
+
 	Super::Deinitialize();
 }
 
@@ -59,12 +64,12 @@ void UHTFeedbackSubsystem::ApplyFeedback(const FHandFeedbackConfig& Config)
 			return;
 		}
 
-		if (FingerToLastTimeFeedbackSentLeft[Config.Location] + MinDelayTime > GetWorld()->GetTimeSeconds()) // Maybe add a queue?
+		if (FingerToTimeToSendLeft[Config.Location] > GetWorld()->GetTimeSeconds()) // Maybe add a queue?
 		{
 			return;
 		}
 
-		LastFeedbackTimeLeft = GetWorld()->GetTimeSeconds();
+		FingerToTimeToSendLeft[Config.Location] = GetWorld()->GetTimeSeconds() + Config.Duration;
 		SendFeedback(LeftHandSerialCom, Config);
 	}
 
@@ -76,12 +81,12 @@ void UHTFeedbackSubsystem::ApplyFeedback(const FHandFeedbackConfig& Config)
 			return;
 		}
 
-		if (FingerToLastTimeFeedbackSentRight[Config.Location] + MinDelayTime > GetWorld()->GetTimeSeconds()) // Maybe add a queue?
+		if (FingerToTimeToSendRight[Config.Location] > GetWorld()->GetTimeSeconds()) // Maybe add a queue?
 		{
 			return;
 		}
 
-		LastFeedbackTimeRight = GetWorld()->GetTimeSeconds();
+		FingerToTimeToSendRight[Config.Location] = GetWorld()->GetTimeSeconds() + Config.Duration;
 		SendFeedback(RightHandSerialCom, Config);
 	}
 }
