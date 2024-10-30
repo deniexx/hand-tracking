@@ -8,6 +8,7 @@
 #include "HTFeedbackSubsystem.generated.h"
 
 class USerialCom;
+
 /**
  * 
  */
@@ -39,6 +40,12 @@ private:
 	double LastFeedbackTimeLeft = 0;
 	double LastFeedbackTimeRight = 0;
 	static constexpr double MinDelayTime = 0.02;
+
+	UPROPERTY()
+	TMap<ETargetHandLocation, double> FingerToLastTimeFeedbackSentRight;
+
+	UPROPERTY()
+	TMap<ETargetHandLocation, double> FingerToLastTimeFeedbackSentLeft;
 
 	UPROPERTY()
 	TObjectPtr<USerialCom> RightHandSerialCom;

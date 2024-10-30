@@ -5,13 +5,19 @@
 
 #include "OculusXRHandComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
-#include "IContentBrowserSingleton.h"
 #include "MotionControllerComponent.h"
-#include "SphereComponent.h"
 #include "Camera/CameraComponent.h"
-#include "HandTracking/HandTracking.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "System/HTBlueprintFunctionLibrary.h"
-#include "System/HTFeedbackSubsystem.h"
+
+static TAutoConsoleVariable<int32> CVarShowDebugFingerTrace(
+	TEXT("ShowDebug.FingerTrace"),
+	1,
+	TEXT("Draws debug info for Finger Traces")
+	TEXT("0 - Do not draw debug info")
+	TEXT("1 - Draw debug info"),
+	ECVF_Cheat
+);
 
 // Sets default values
 AHTHandsPawn::AHTHandsPawn()
@@ -42,61 +48,6 @@ AHTHandsPawn::AHTHandsPawn()
 
 	OculusXRHandLeft->MeshType = EOculusXRHandType::HandLeft;
 	OculusXRHandRight->MeshType = EOculusXRHandType::HandRight;
-
-	LeftThumbTipSphere = CreateDefaultSubobject<USphereComponent>("LeftThumbTipSphere");
-	LeftIndexTipSphere = CreateDefaultSubobject<USphereComponent>("LeftIndexTipSphere");
-	LeftMiddleTipSphere = CreateDefaultSubobject<USphereComponent>("LeftMiddleTipSphere");
-	LeftRingTipSphere = CreateDefaultSubobject<USphereComponent>("LeftRingTipSphere");
-	LeftPinkyTipSphere = CreateDefaultSubobject<USphereComponent>("LeftPinkyTipSphere");
-
-	RightThumbTipSphere = CreateDefaultSubobject<USphereComponent>("RightThumbTipSphere");
-	RightIndexTipSphere = CreateDefaultSubobject<USphereComponent>("RightIndexTipSphere");
-	RightMiddleTipSphere = CreateDefaultSubobject<USphereComponent>("RightMiddleTipSphere");
-	RightRingTipSphere = CreateDefaultSubobject<USphereComponent>("RightRingTipSphere");
-	RightPinkyTipSphere = CreateDefaultSubobject<USphereComponent>("RightPinkyTipSphere");
-	
-	LeftThumbTipSphere->SetupAttachment(OculusXRHandLeft, "Thumb Tip");
-	LeftIndexTipSphere->SetupAttachment(OculusXRHandLeft, "Index Tip");
-	LeftMiddleTipSphere->SetupAttachment(OculusXRHandLeft, "Middle Tip");
-	LeftRingTipSphere->SetupAttachment(OculusXRHandLeft, "Ring Tip");
-	LeftPinkyTipSphere->SetupAttachment(OculusXRHandLeft, "Pinky Tip");
-	
-	
-	RightThumbTipSphere->SetupAttachment(OculusXRHandRight, "Thumb Tip");
-	RightIndexTipSphere->SetupAttachment(OculusXRHandRight, "Index Tip");
-	RightMiddleTipSphere->SetupAttachment(OculusXRHandRight, "Middle Tip");
-	RightRingTipSphere->SetupAttachment(OculusXRHandRight, "Ring Tip");
-	RightPinkyTipSphere->SetupAttachment(OculusXRHandRight, "Pinky Tip");
-
-	LeftHandSpheres =
-	{
-		LeftThumbTipSphere,
-		LeftIndexTipSphere,
-		LeftMiddleTipSphere,
-		LeftRingTipSphere,
-		LeftPinkyTipSphere
-	};
-
-	RightHandSpheres =
-	{
-		RightThumbTipSphere,
-		RightIndexTipSphere,
-		RightMiddleTipSphere,
-		RightRingTipSphere,
-		RightPinkyTipSphere
-	};
-
-	LeftThumbTipSphere->SetSphereRadius(2.f);
-	LeftIndexTipSphere->SetSphereRadius(2.f);
-	LeftMiddleTipSphere->SetSphereRadius(2.f);
-	LeftRingTipSphere->SetSphereRadius(2.f);
-	LeftPinkyTipSphere->SetSphereRadius(2.f);
-	
-	RightThumbTipSphere->SetSphereRadius(2.f);
-	RightIndexTipSphere->SetSphereRadius(2.f);
-	RightMiddleTipSphere->SetSphereRadius(2.f);
-	RightRingTipSphere->SetSphereRadius(2.f);
-	RightPinkyTipSphere->SetSphereRadius(2.f);
 }
 
 // Called when the game starts or when spawned
@@ -105,25 +56,44 @@ void AHTHandsPawn::BeginPlay()
 	Super::BeginPlay();
 	
 	UHeadMountedDisplayFunctionLibrary::SetTrackingOrigin(EHMDTrackingOrigin::Stage);
-
-	for (auto Sphere : RightHandSpheres)
-	{
-		Sphere->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnRightHandSphereOverlapBegin);
-		Sphere->OnComponentEndOverlap.AddDynamic(this, &ThisClass::OnRightHandSphereOverlapEnd);
-	}
-
-	for (auto Sphere : LeftHandSpheres)
-	{
-		Sphere->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnLeftHandSphereOverlapBegin);
-		Sphere->OnComponentEndOverlap.AddDynamic(this, &ThisClass::OnLeftHandSphereOverlapEnd);
-	}
 }
 
 // Called every frame
 void AHTHandsPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
+	TArray<AActor*> IgnoredActors = { this };
+	const bool bDrawDebug = CVarShowDebugFingerTrace.GetValueOnAnyThread() > 0;
+		
+	if (OculusXRHandRight->bSkeletalMeshInitialized)
+	{
+		FHitResult HitResult;
+		if (TraceFinger(OculusXRHandRight, "Thumb Tip", IgnoredActors, bDrawDebug, HitResult))
+		{
+			DoFeedback(ETargetHand::Right, ETargetHandLocation::Thumb, 0.5f);
+		}
 
+		if (TraceFinger(OculusXRHandRight, "Index Tip", IgnoredActors, bDrawDebug, HitResult))
+		{
+			DoFeedback(ETargetHand::Right, ETargetHandLocation::Index, 0.5f);
+		}
+
+		if (TraceFinger(OculusXRHandRight, "Middle Tip", IgnoredActors, bDrawDebug, HitResult))
+		{
+			DoFeedback(ETargetHand::Right, ETargetHandLocation::Middle, 0.5f);
+		}
+
+		if (TraceFinger(OculusXRHandRight, "Ring Tip", IgnoredActors, bDrawDebug, HitResult))
+		{
+			DoFeedback(ETargetHand::Right, ETargetHandLocation::Ring, 0.5f);
+		}
+
+		if (TraceFinger(OculusXRHandRight, "Pinky Tip", IgnoredActors, bDrawDebug, HitResult))
+		{
+			DoFeedback(ETargetHand::Right, ETargetHandLocation::Pinky, 0.5f);
+		}
+	}
 }
 
 // Called to bind functionality to input
@@ -131,145 +101,23 @@ void AHTHandsPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+	
 }
 
-void AHTHandsPawn::OnRightHandSphereOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+bool AHTHandsPawn::TraceFinger(UOculusXRHandComponent* HandComponent, FName SocketName, const TArray<AActor*>& IgnoredActors, bool bDrawDebug, FHitResult& OutResult) const
 {
-	if (OtherActor == this) return;
-	if (FHandSphereList* Result = ActorsToPointOfContacts.Find(OtherActor))
-	{
-		if (Result->Spheres.Find(Cast<USphereComponent>(OverlappedComponent)) != INDEX_NONE)
-		{
-			// Sphere is already there IDK how we got here
-		}
-		else
-		{
-			Result->Spheres.Add(Cast<USphereComponent>(OverlappedComponent));
-		}
-
-		if (Result->Spheres.Num() > 3)
-		{
-			for (const auto Component : OtherActor->GetComponents())
-			{
-				if (UPrimitiveComponent* Comp = Cast<UPrimitiveComponent>(Component))
-				{
-					//Comp->SetSimulatePhysics(false);
-				}
-			}
-			OtherActor->AttachToComponent(MotionControllerRight, FAttachmentTransformRules::KeepWorldTransform);
-			FHandFeedbackConfig Config;
-			Config.Hand = ETargetHand::Right;
-			Config.Location = ETargetHandLocation::Thumb;
-			Config.NormalizedStrength = 1.f;
-			Config.Duration = 0.5f;
-			UHTBlueprintFunctionLibrary::ApplyHandFeedback(this, Config);
-		}
-	}
-	else
-	{
-		FHandSphereList List;
-		List.Spheres.Add(Cast<USphereComponent>(OverlappedComponent));
-		ActorsToPointOfContacts.Add(OtherActor, List);
-	}
-
-	for (int Idx = 0; Idx < RightHandSpheres.Num(); ++Idx)
-	{
-		if (Cast<USphereComponent>(OverlappedComponent) == RightHandSpheres[Idx])
-		{
-			FHandFeedbackConfig Config;
-			Config.Hand = ETargetHand::Right;
-			Config.Location = (ETargetHandLocation)Idx;
-			Config.NormalizedStrength = 1.f;
-			Config.Duration = 0.5f;
-			UHTBlueprintFunctionLibrary::ApplyHandFeedback(this, Config);
-		}
-	}
+	const EDrawDebugTrace::Type DrawDebug = bDrawDebug ? EDrawDebugTrace::ForOneFrame : EDrawDebugTrace::None;
+	FHitResult HitResult;
+	const FVector TraceStart = HandComponent->GetSocketLocation(SocketName);
+	return UKismetSystemLibrary::SphereTraceSingleForObjects(this, TraceStart, TraceStart, TraceSphereRadius, TraceChannels, false, IgnoredActors, DrawDebug, HitResult, true);
 }
 
-void AHTHandsPawn::OnRightHandSphereOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int OtherBodyIndex)
+void AHTHandsPawn::DoFeedback(ETargetHand Hand, ETargetHandLocation Location, float Duration)
 {
-	if (OtherActor == this) return;
-	if (FHandSphereList* Result = ActorsToPointOfContacts.Find(OtherActor))
-	{
-		if (Result->Spheres.Remove(Cast<USphereComponent>(OverlappedComponent)) != INDEX_NONE)
-		{
-			if (Result->Spheres.Num() < 3)
-			{
-				OtherActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-				for (const auto Component : OtherActor->GetComponents())
-				{
-					if (UPrimitiveComponent* Comp = Cast<UPrimitiveComponent>(Component))
-					{
-						//Comp->SetSimulatePhysics(true);
-					}
-				}
-			}
-		}
-	}
-}
-
-void AHTHandsPawn::OnLeftHandSphereOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	if (OtherActor == this) return;
-	if (FHandSphereList* Result = ActorsToPointOfContacts.Find(OtherActor))
-	{
-		if (Result->Spheres.Find(Cast<USphereComponent>(OverlappedComponent)) != INDEX_NONE)
-		{
-			// Sphere is already there IDK how we got here
-		}
-		else
-		{
-			Result->Spheres.Add(Cast<USphereComponent>(OverlappedComponent));
-		}
-
-		if (Result->Spheres.Num() > 3)
-		{
-			for (const auto Component : OtherActor->GetComponents())
-			{
-				if (UPrimitiveComponent* Comp = Cast<UPrimitiveComponent>(Component))
-				{
-					//Comp->SetSimulatePhysics(false);
-				}
-			}
-			OtherActor->AttachToComponent(MotionControllerLeft, FAttachmentTransformRules::KeepWorldTransform);
-			FHandFeedbackConfig Config;
-			Config.Hand = ETargetHand::Left;
-			Config.Location = ETargetHandLocation::Thumb;
-			Config.NormalizedStrength = 1.f;
-			Config.Duration = 3.f;
-			UHTBlueprintFunctionLibrary::ApplyHandFeedback(this, Config);
-		}
-	}
-	else
-	{
-		FHandSphereList List;
-		List.Spheres.Add(Cast<USphereComponent>(OverlappedComponent));
-		ActorsToPointOfContacts.Add(OtherActor, List);
-	}
-}
-
-void AHTHandsPawn::OnLeftHandSphereOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int OtherBodyIndex)
-{
-	if (OtherActor == this) return;
-	if (FHandSphereList* Result = ActorsToPointOfContacts.Find(OtherActor))
-	{
-		if (Result->Spheres.Remove(Cast<USphereComponent>(OverlappedComponent)) != INDEX_NONE)
-		{
-			if (Result->Spheres.Num() < 3)
-			{
-				OtherActor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-				for (const auto Component : OtherActor->GetComponents())
-				{
-					if (UPrimitiveComponent* Comp = Cast<UPrimitiveComponent>(Component))
-					{
-						//Comp->SetSimulatePhysics(true);
-					}
-				}
-			}
-		}
-	}
+	FHandFeedbackConfig Config;
+	Config.Hand = Hand;
+	Config.NormalizedStrength = 1.f;
+	Config.Location = Location;
+	Config.Duration = Duration;
+	UHTBlueprintFunctionLibrary::ApplyHandFeedback(this, Config);
 }

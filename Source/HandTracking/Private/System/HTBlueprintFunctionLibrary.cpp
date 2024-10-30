@@ -25,3 +25,24 @@ void UHTBlueprintFunctionLibrary::ApplyHandFeedback(const UObject* WorldContextO
 		FeedbackSubsystem->ApplyFeedback(HandFeedbackConfig);
 	}
 }
+
+FString UHTBlueprintFunctionLibrary::GetStringFromFinger(ETargetHandLocation Target)
+{
+	switch (Target)
+	{
+	case ETargetHandLocation::Index:
+		return FString("Index");
+	case ETargetHandLocation::Middle:
+		return FString("Middle");
+	case ETargetHandLocation::Ring:
+		return FString("Ring");
+	case ETargetHandLocation::Pinky:
+		return FString("Pinky");
+	case ETargetHandLocation::Thumb:
+		return FString("Thumb");
+	case ETargetHandLocation::Palm:
+		return FString("Palm");
+	default:
+		return FString("Unknown");
+	}
+}

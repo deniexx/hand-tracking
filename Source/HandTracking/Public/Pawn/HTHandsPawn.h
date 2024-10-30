@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "HTTypes.h"
 #include "GameFramework/Pawn.h"
 #include "HTHandsPawn.generated.h"
 
@@ -31,19 +32,10 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	
-	UFUNCTION()
-	void OnRightHandSphereOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
-	UFUNCTION()
-	void OnRightHandSphereOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int OtherBodyIndex);
+	void DoFeedback(ETargetHand Hand, ETargetHandLocation Location, float Duration);
+	bool TraceFinger(UOculusXRHandComponent* HandComponent, FName SocketName, const TArray<AActor*>& IgnoredActors, bool bDrawDebug, FHitResult& OutResult) const;
 
-	UFUNCTION()
-	void OnLeftHandSphereOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
-	UFUNCTION()
-	void OnLeftHandSphereOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int OtherBodyIndex);
-	
 protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components)
@@ -61,46 +53,15 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components)
 	UOculusXRHandComponent* OculusXRHandRight;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components)
-	USphereComponent* LeftThumbTipSphere;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components)
-	USphereComponent* LeftIndexTipSphere;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components)
-	USphereComponent* LeftMiddleTipSphere;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components)
-	USphereComponent* LeftRingTipSphere;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components)
-	USphereComponent* LeftPinkyTipSphere;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components)
-	USphereComponent* RightThumbTipSphere;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components)
-	USphereComponent* RightIndexTipSphere;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components)
-	USphereComponent* RightMiddleTipSphere;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components)
-	USphereComponent* RightRingTipSphere;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components)
-	USphereComponent* RightPinkyTipSphere;
-
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = HandTrackingSettings)
+	TArray<TEnumAsByte<EObjectTypeQuery>> TraceChannels;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = HandTrackingSettings)
+	float TraceSphereRadius = 1.f;
+	
 private:
 
-	UPROPERTY()
-	TArray<USphereComponent*> LeftHandSpheres;
-
-	UPROPERTY()
-	TArray<USphereComponent*> RightHandSpheres;
-
-	UPROPERTY()
-	TMap<AActor*, FHandSphereList> ActorsToPointOfContacts;
+	float FeedbackCooldown = 0.25f;
 	
 public:	
 	// Called every frame

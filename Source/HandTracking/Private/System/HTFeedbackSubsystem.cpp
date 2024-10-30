@@ -5,6 +5,7 @@
 
 #include "SerialCom.h"
 #include "HandTracking/HandTracking.h"
+#include "System/HTBlueprintFunctionLibrary.h"
 
 void UHTFeedbackSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -16,6 +17,19 @@ void UHTFeedbackSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	{
 		UE_LOG(LogHandTracking, Error, TEXT("RightHandSerialCom has failed to construct"));
 	}
+
+	const double TimeSeconds = GetWorld()->GetTimeSeconds();
+	FingerToLastTimeFeedbackSentLeft.Add({ ETargetHandLocation::Thumb, TimeSeconds });
+	FingerToLastTimeFeedbackSentLeft.Add({ ETargetHandLocation::Index, TimeSeconds });
+	FingerToLastTimeFeedbackSentLeft.Add({ ETargetHandLocation::Middle, TimeSeconds });
+	FingerToLastTimeFeedbackSentLeft.Add({ ETargetHandLocation::Ring, TimeSeconds });
+	FingerToLastTimeFeedbackSentLeft.Add({ ETargetHandLocation::Pinky, TimeSeconds });
+
+	FingerToLastTimeFeedbackSentRight.Add({ ETargetHandLocation::Thumb, TimeSeconds });
+	FingerToLastTimeFeedbackSentRight.Add({ ETargetHandLocation::Index, TimeSeconds });
+	FingerToLastTimeFeedbackSentRight.Add({ ETargetHandLocation::Middle, TimeSeconds });
+	FingerToLastTimeFeedbackSentRight.Add({ ETargetHandLocation::Ring, TimeSeconds });
+	FingerToLastTimeFeedbackSentRight.Add({ ETargetHandLocation::Pinky, TimeSeconds });
 
 	/* @TODO (Denis): Uncomment when left hand will be used
 	LeftHandSerialCom = USerialCom::OpenComPort(bSuccess, 4, 9600);
@@ -45,7 +59,7 @@ void UHTFeedbackSubsystem::ApplyFeedback(const FHandFeedbackConfig& Config)
 			return;
 		}
 
-		if (LastFeedbackTimeLeft + MinDelayTime > GetWorld()->GetTimeSeconds()) // Maybe add a queue?
+		if (FingerToLastTimeFeedbackSentLeft[Config.Location] + MinDelayTime > GetWorld()->GetTimeSeconds()) // Maybe add a queue?
 		{
 			return;
 		}
@@ -62,7 +76,7 @@ void UHTFeedbackSubsystem::ApplyFeedback(const FHandFeedbackConfig& Config)
 			return;
 		}
 
-		if (LastFeedbackTimeRight + MinDelayTime > GetWorld()->GetTimeSeconds()) // Maybe add a queue?
+		if (FingerToLastTimeFeedbackSentRight[Config.Location] + MinDelayTime > GetWorld()->GetTimeSeconds()) // Maybe add a queue?
 		{
 			return;
 		}
@@ -77,13 +91,18 @@ void UHTFeedbackSubsystem::SendFeedback(USerialCom* Com, const FHandFeedbackConf
 	const float ClampedStrength = FMath::Clamp(Config.NormalizedStrength, 0.f, 1.f); // Make sure strength is between 0 and 1
 
 	const uint8 Location = (uint8)Config.Location;
-	const uint8 Strength = (uint8)(255 * ClampedStrength);
-	TArray<uint8> RawData = {Location, Strength };
+	const uint8 Strength = (uint8)(255.f * ClampedStrength);
+	TArray<uint8> RawData = { Location, Strength };
 	RawData.Append(USerialCom::FloatToBytes(Config.Duration));
-	
+
+	const FString HandString = Config.Hand == ETargetHand::Left ? "Left" : "Right";
 	if (!Com->WriteBytes(RawData))
 	{
-		const FString ErrorHand = Config.Hand == ETargetHand::Left ? "Left" : "Right";
-		UE_LOG(LogHandTracking, Error, TEXT("Failed to send feedback to %ls hand"), *ErrorHand);
+		UE_LOG(LogHandTracking, Error, TEXT("Failed to send feedback to %ls hand"), *HandString);
+	}
+	else
+	{
+		const FString FingerString = UHTBlueprintFunctionLibrary::GetStringFromFinger(Config.Location);
+		UE_LOG(LogHandTracking, Log, TEXT("Sending feedback to %ls hand, %ls finger with %d index."), *HandString, *FingerString, Location);
 	}
 }
