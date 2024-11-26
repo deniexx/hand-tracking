@@ -72,52 +72,52 @@ void AHTHandsPawn::Tick(float DeltaTime)
 		FHitResult HitResult;
 		if (TraceFinger(OculusXRHandRight, "Thumb Tip", IgnoredActors, bDrawDebug, HitResult))
 		{
-			TryGrabItem(GrabMapRight, ETargetHandLocation::Thumb, HitResult);
+			TryGrabItem(GrabMapRight, ETargetHandLocation::Thumb, HitResult, HeldActorsRightHand);
 			DoFeedback(ETargetHand::Right, ETargetHandLocation::Thumb, 0.5f);
 		}
 		else
 		{
-			TryReleaseItem(GrabMapRight, ETargetHandLocation::Thumb);
+			TryReleaseItem(GrabMapRight, ETargetHandLocation::Thumb, HeldActorsRightHand);
 		}
 
 		if (TraceFinger(OculusXRHandRight, "Index Tip", IgnoredActors, bDrawDebug, HitResult))
 		{
-			TryGrabItem(GrabMapRight, ETargetHandLocation::Index, HitResult);
+			TryGrabItem(GrabMapRight, ETargetHandLocation::Index, HitResult, HeldActorsRightHand);
 			DoFeedback(ETargetHand::Right, ETargetHandLocation::Index, 0.5f);
 		}
 		else
 		{
-			TryReleaseItem(GrabMapRight, ETargetHandLocation::Index);
+			TryReleaseItem(GrabMapRight, ETargetHandLocation::Index, HeldActorsRightHand);
 		}
 
 		if (TraceFinger(OculusXRHandRight, "Middle Tip", IgnoredActors, bDrawDebug, HitResult))
 		{
-			TryGrabItem(GrabMapRight, ETargetHandLocation::Middle, HitResult);
+			TryGrabItem(GrabMapRight, ETargetHandLocation::Middle, HitResult, HeldActorsRightHand);
 			DoFeedback(ETargetHand::Right, ETargetHandLocation::Middle, 0.5f);
 		}
 		else
 		{
-			TryReleaseItem(GrabMapRight, ETargetHandLocation::Middle);
+			TryReleaseItem(GrabMapRight, ETargetHandLocation::Middle, HeldActorsRightHand);
 		}
 
 		if (TraceFinger(OculusXRHandRight, "Ring Tip", IgnoredActors, bDrawDebug, HitResult))
 		{
-			TryGrabItem(GrabMapRight, ETargetHandLocation::Ring, HitResult);
+			TryGrabItem(GrabMapRight, ETargetHandLocation::Ring, HitResult, HeldActorsRightHand);
 			DoFeedback(ETargetHand::Right, ETargetHandLocation::Ring, 0.5f);
 		}
 		else
 		{
-			TryReleaseItem(GrabMapRight, ETargetHandLocation::Ring);
+			TryReleaseItem(GrabMapRight, ETargetHandLocation::Ring, HeldActorsRightHand);
 		}
 
 		if (TraceFinger(OculusXRHandRight, "Pinky Tip", IgnoredActors, bDrawDebug, HitResult))
 		{
-			TryGrabItem(GrabMapRight, ETargetHandLocation::Pinky, HitResult);
+			TryGrabItem(GrabMapRight, ETargetHandLocation::Pinky, HitResult, HeldActorsRightHand);
 			DoFeedback(ETargetHand::Right, ETargetHandLocation::Pinky, 0.5f);
 		}
 		else
 		{
-			TryReleaseItem(GrabMapRight, ETargetHandLocation::Pinky);
+			TryReleaseItem(GrabMapRight, ETargetHandLocation::Pinky, HeldActorsRightHand);
 		}
 	}
 }
@@ -148,7 +148,7 @@ void AHTHandsPawn::DoFeedback(ETargetHand Hand, ETargetHandLocation Location, fl
 }
 
 // @TODO: Transition into hand poses ( Could define a required hand poses using BitMask )
-void AHTHandsPawn::TryGrabItem(ActorGrabMap& GrabMap, ETargetHandLocation Location, const FHitResult& HitResult) const
+void AHTHandsPawn::TryGrabItem(ActorGrabMap& GrabMap, ETargetHandLocation Location, const FHitResult& HitResult, TArray<AActor*>& HeldActors) const
 {
 	if (HitResult.GetActor() == nullptr)
 	{
@@ -162,21 +162,19 @@ void AHTHandsPawn::TryGrabItem(ActorGrabMap& GrabMap, ETargetHandLocation Locati
 
 	if (GrabMap.Num() > 3)
 	{
-		HitResult.GetActor()->AttachToComponent(OculusXRHandRight, FAttachmentTransformRules::KeepRelativeTransform);
+		HitResult.GetActor()->AttachToComponent(OculusXRHandRight, FAttachmentTransformRules::KeepWorldTransform);
+		HeldActors.Add(HitResult.GetActor());
 	}
 }
 
-void AHTHandsPawn::TryReleaseItem(ActorGrabMap& GrabMap, ETargetHandLocation Location)
+void AHTHandsPawn::TryReleaseItem(ActorGrabMap& GrabMap, ETargetHandLocation Location, TArray<AActor*>& HeldActors)
 {
-	if (!GrabMap.Find(Location))
+	if (GrabMap.Num() < 3)
 	{
-		return;
-	}
-
-	AActor* Target = GrabMap.FindAndRemoveChecked(Location);
-	if (GrabMap.Num() <= 3)
-	{
-		Target->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		for (auto& Actor : HeldActors)
+		{
+			Actor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		}
 	}
 }
 

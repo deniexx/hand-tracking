@@ -68,11 +68,13 @@ private:
 
 	void DoFeedback(ETargetHand Hand, ETargetHandLocation Location, float Duration) const;
 	bool TraceFinger(UOculusXRHandComponent* HandComponent, FName SocketName, const TArray<AActor*>& IgnoredActors, bool bDrawDebug, FHitResult& OutResult) const;
-	void TryGrabItem(ActorGrabMap& GrabMap, ETargetHandLocation Location, const FHitResult& HitResult) const;
-	void TryReleaseItem(ActorGrabMap& GrabMap, ETargetHandLocation Location);
+	void TryGrabItem(ActorGrabMap& GrabMap, ETargetHandLocation Location, const FHitResult& HitResult, TArray<AActor*>& HeldActors) const;
+	void TryReleaseItem(ActorGrabMap& GrabMap, ETargetHandLocation Location, TArray<AActor*>& HeldActors);
 
 private:
-	
+
+	TArray<AActor*> HeldActorsRightHand;
+	TArray<AActor*> HeldActorsLeftHand;
 	ActorGrabMap GrabMapLeft;
 	ActorGrabMap GrabMapRight;
 
