@@ -4,6 +4,11 @@
 
 #include "HTTypes.generated.h"
 
+#define HAS_REQUIRED_BITS(RequiredBitmask, CheckBitmask) ((RequiredBitmask & CheckBitmask) == RequiredBitmask)
+#define TEST_BIT(Bitmask, Bit) (Bitmask & static_cast<uint8>(Bit) > 0)
+#define SET_BIT(Bitmask, Bit) (Bitmask |= static_cast<uint8>(Bit))
+#define BIT(Bit) 1 << Bit
+
 UENUM()
 enum class ETargetHand : uint8
 {
@@ -12,16 +17,17 @@ enum class ETargetHand : uint8
 	Both
 };
 
-UENUM()
+UENUM(meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
 enum class ETargetHandLocation : uint8
 {
-	Thumb = 0,
-	Index = 1,
-	Middle = 2,
-	Ring = 3,
-	Pinky = 4,
-	Palm = 5
+	Thumb = BIT(0),
+	Index = BIT(1),
+	Middle = BIT(2),
+	Ring = BIT(3),
+	Pinky = BIT(4),
+	Palm = BIT(5)
 };
+ENUM_CLASS_FLAGS(ETargetHandLocation);
 
 USTRUCT(BlueprintType)
 struct FHandFeedbackConfig

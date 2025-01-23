@@ -12,15 +12,22 @@ class UCameraComponent;
 class UMotionControllerComponent;
 class UOculusXRHandComponent;
 
-USTRUCT(BlueprintType)
-struct FHandSphereList
+USTRUCT()
+struct FFingerCollisionData
 {
-	GENERATED_BODY();
+	GENERATED_BODY()
 
-	TArray<USphereComponent*> Spheres;
+	uint8 FingersColliding = 0;
+
+	UPROPERTY()
+	AActor* HitActor = nullptr;;
+
+	void Reset()
+	{
+		FingersColliding = 0;
+		HitActor = nullptr;
+	}
 };
-
-typedef TMap<ETargetHandLocation, AActor*> ActorGrabMap;
 
 UCLASS()
 class HANDTRACKING_API AHTHandsPawn : public APawn
@@ -66,16 +73,22 @@ protected:
 
 private:
 
+	static bool AreGrabRequirementsMet(const FFingerCollisionData& FingerCollision);
+
 	void DoFeedback(ETargetHand Hand, ETargetHandLocation Location, float Duration) const;
 	bool TraceFinger(UOculusXRHandComponent* HandComponent, FName SocketName, const TArray<AActor*>& IgnoredActors, bool bDrawDebug, FHitResult& OutResult) const;
-	void TryGrabItem(ActorGrabMap& GrabMap, ETargetHandLocation Location, const FHitResult& HitResult, TArray<AActor*>& HeldActors) const;
-	void TryReleaseItem(ActorGrabMap& GrabMap, ETargetHandLocation Location, TArray<AActor*>& HeldActors);
+	void TryGrabItem(FFingerCollisionData& FingerCollision, ETargetHandLocation Location, const FHitResult& HitResult, TArray<AActor*>& HeldActors) const;
+	void TryReleaseItem(FFingerCollisionData& FingerCollision, TArray<AActor*>& HeldActors);
 
 private:
 
+	UPROPERTY()
 	TArray<AActor*> HeldActorsRightHand;
+
+	UPROPERTY()
 	TArray<AActor*> HeldActorsLeftHand;
-	ActorGrabMap GrabMapLeft;
-	ActorGrabMap GrabMapRight;
+
+	FFingerCollisionData FingerCollisionLeft;
+	FFingerCollisionData FingerCollisionRight;
 
 };

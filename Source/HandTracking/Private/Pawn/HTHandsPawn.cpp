@@ -3,16 +3,20 @@
 
 #include "Pawn/HTHandsPawn.h"
 
+#include <bit>
+
 #include "OculusXRHandComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "MotionControllerComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Interfaces/HTGrabbable.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "System/HTBlueprintFunctionLibrary.h"
 
-static TAutoConsoleVariable<int32> CVarShowDebugFingerTrace(
+int32 GDebugFingerTrace = 0;
+static FAutoConsoleVariableRef CVarShowDebugFingerTrace(
 	TEXT("ShowDebug.FingerTrace"),
-	1,
+	GDebugFingerTrace,
 	TEXT("Draws debug info for Finger Traces")
 	TEXT("0 - Do not draw debug info")
 	TEXT("1 - Draw debug info"),
@@ -64,60 +68,60 @@ void AHTHandsPawn::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	
 	TArray<AActor*> IgnoredActors = { this };
-	const bool bDrawDebug = CVarShowDebugFingerTrace.GetValueOnAnyThread() > 0;
+	const bool bDrawDebug = GDebugFingerTrace > 0;
 
 	if (OculusXRHandRight->bSkeletalMeshInitialized)
 	{
-		GrabMapRight.Empty();
+		FingerCollisionRight.Reset();
 		FHitResult HitResult;
 		if (TraceFinger(OculusXRHandRight, "Thumb Tip", IgnoredActors, bDrawDebug, HitResult))
 		{
-			TryGrabItem(GrabMapRight, ETargetHandLocation::Thumb, HitResult, HeldActorsRightHand);
+			TryGrabItem(FingerCollisionRight, ETargetHandLocation::Thumb, HitResult, HeldActorsRightHand);
 			DoFeedback(ETargetHand::Right, ETargetHandLocation::Thumb, 0.5f);
 		}
 		else
 		{
-			TryReleaseItem(GrabMapRight, ETargetHandLocation::Thumb, HeldActorsRightHand);
+			TryReleaseItem(FingerCollisionRight, HeldActorsRightHand);
 		}
 
 		if (TraceFinger(OculusXRHandRight, "Index Tip", IgnoredActors, bDrawDebug, HitResult))
 		{
-			TryGrabItem(GrabMapRight, ETargetHandLocation::Index, HitResult, HeldActorsRightHand);
+			TryGrabItem(FingerCollisionRight, ETargetHandLocation::Index, HitResult, HeldActorsRightHand);
 			DoFeedback(ETargetHand::Right, ETargetHandLocation::Index, 0.5f);
 		}
 		else
 		{
-			TryReleaseItem(GrabMapRight, ETargetHandLocation::Index, HeldActorsRightHand);
+			TryReleaseItem(FingerCollisionRight, HeldActorsRightHand);
 		}
 
 		if (TraceFinger(OculusXRHandRight, "Middle Tip", IgnoredActors, bDrawDebug, HitResult))
 		{
-			TryGrabItem(GrabMapRight, ETargetHandLocation::Middle, HitResult, HeldActorsRightHand);
+			TryGrabItem(FingerCollisionRight, ETargetHandLocation::Middle, HitResult, HeldActorsRightHand);
 			DoFeedback(ETargetHand::Right, ETargetHandLocation::Middle, 0.5f);
 		}
 		else
 		{
-			TryReleaseItem(GrabMapRight, ETargetHandLocation::Middle, HeldActorsRightHand);
+			TryReleaseItem(FingerCollisionRight, HeldActorsRightHand);
 		}
 
 		if (TraceFinger(OculusXRHandRight, "Ring Tip", IgnoredActors, bDrawDebug, HitResult))
 		{
-			TryGrabItem(GrabMapRight, ETargetHandLocation::Ring, HitResult, HeldActorsRightHand);
+			TryGrabItem(FingerCollisionRight, ETargetHandLocation::Ring, HitResult, HeldActorsRightHand);
 			DoFeedback(ETargetHand::Right, ETargetHandLocation::Ring, 0.5f);
 		}
 		else
 		{
-			TryReleaseItem(GrabMapRight, ETargetHandLocation::Ring, HeldActorsRightHand);
+			TryReleaseItem(FingerCollisionRight, HeldActorsRightHand);
 		}
 
 		if (TraceFinger(OculusXRHandRight, "Pinky Tip", IgnoredActors, bDrawDebug, HitResult))
 		{
-			TryGrabItem(GrabMapRight, ETargetHandLocation::Pinky, HitResult, HeldActorsRightHand);
+			TryGrabItem(FingerCollisionRight, ETargetHandLocation::Pinky, HitResult, HeldActorsRightHand);
 			DoFeedback(ETargetHand::Right, ETargetHandLocation::Pinky, 0.5f);
 		}
 		else
 		{
-			TryReleaseItem(GrabMapRight, ETargetHandLocation::Pinky, HeldActorsRightHand);
+			TryReleaseItem(FingerCollisionRight, HeldActorsRightHand);
 		}
 	}
 }
@@ -147,34 +151,52 @@ void AHTHandsPawn::DoFeedback(ETargetHand Hand, ETargetHandLocation Location, fl
 	UHTBlueprintFunctionLibrary::ApplyHandFeedback(this, Config);
 }
 
-// @TODO: Transition into hand poses ( Could define a required hand poses using BitMask )
-void AHTHandsPawn::TryGrabItem(ActorGrabMap& GrabMap, ETargetHandLocation Location, const FHitResult& HitResult, TArray<AActor*>& HeldActors) const
+bool AHTHandsPawn::AreGrabRequirementsMet(const FFingerCollisionData& FingerCollision)
+{
+	int32 RequiredPointsOfContact = 3;
+	uint8 RequiredFingers = 0;
+	
+	if (FingerCollision.HitActor && FingerCollision.HitActor->Implements<UHTGrabbable>())
+	{
+		RequiredPointsOfContact = IHTGrabbable::Execute_GetRequiredPointsOfContact(FingerCollision.HitActor);
+		RequiredFingers = IHTGrabbable::Execute_GetRequiredFingers(FingerCollision.HitActor);
+	}
+	
+	/** @NOTE (Denis): Maybe wrap this in a function? */
+	const int32 NumFingers = std::popcount(FingerCollision.FingersColliding);
+	return NumFingers >= RequiredPointsOfContact && HAS_REQUIRED_BITS(RequiredFingers, FingerCollision.FingersColliding);
+}
+
+void AHTHandsPawn::TryGrabItem(FFingerCollisionData& FingerCollision, ETargetHandLocation Location, const FHitResult& HitResult, TArray<AActor*>& HeldActors) const
 {
 	if (HitResult.GetActor() == nullptr)
 	{
 		return;
 	}
-	
-	if (!GrabMap.Find(Location))
-	{
-		GrabMap.Add( { Location, HitResult.GetActor() });
-	}
 
-	if (GrabMap.Num() > 3)
+	FingerCollision.HitActor = HitResult.GetActor();
+	SET_BIT(FingerCollision.FingersColliding, Location);
+	
+	if (AreGrabRequirementsMet(FingerCollision))
 	{
+		// @TODO (Denis): This needs to be replaced by the Grab Interface function and force the object to maintain it's position, etc... relative to the hand rather than using parenting
 		HitResult.GetActor()->AttachToComponent(OculusXRHandRight, FAttachmentTransformRules::KeepWorldTransform);
 		HeldActors.Add(HitResult.GetActor());
 	}
 }
 
-void AHTHandsPawn::TryReleaseItem(ActorGrabMap& GrabMap, ETargetHandLocation Location, TArray<AActor*>& HeldActors)
+void AHTHandsPawn::TryReleaseItem(FFingerCollisionData& FingerCollision, TArray<AActor*>& HeldActors)
 {
-	if (GrabMap.Num() < 3)
+	// If grab requirements are not met, drop the items
+	if (!AreGrabRequirementsMet(FingerCollision))
 	{
 		for (auto& Actor : HeldActors)
 		{
+			// @TODO (Denis): Replace this with the Drop Interface function
 			Actor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 		}
+
+		FingerCollision.Reset();
 	}
 }
 
