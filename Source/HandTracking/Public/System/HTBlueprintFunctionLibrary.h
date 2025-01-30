@@ -36,4 +36,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "HTBlueprintFunctionLibrary")
 	static FString GetStringFromFinger(ETargetHandLocation Target);
+
+	UFUNCTION(BlueprintCallable, Category = "HTBlueprintFunctionLibrary")
+	static void LowPassFilter_RollingAverage(const FVector& LastAverage, const FVector& NewSample, FVector& NewAverage, const int32 NumSamples = 10);
 };

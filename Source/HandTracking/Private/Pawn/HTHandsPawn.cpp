@@ -66,62 +66,82 @@ void AHTHandsPawn::BeginPlay()
 void AHTHandsPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+
+	/** @NOTE (Denis): This introduces left hand bias, which has some issues described below:
+	 * If you are holding an object with the right hand and then try to take it with the left, that will work
+	 * But if you are holding an object with the left and try to take it with the right, it will fail, as the Left hand is checked after the right
+	 * Either we flip this around, depending on the dominant hand of the user, or introduce a way to track previously grabbed objects, that way we can
+	 * filter for those and update grabbing properly, which is not ideal, maybe adding a small delay would help, but unsure on how to fix this issue currently
+	 * that is consistent and feels good, other than switching over to pinching gesturees to grab objects, or multiple different gestures to grab objects
+	 */
+	TraceAndGrabFromHand(OculusXRHandRight, MotionControllerRight, FingerCollisionRight, HeldActorsRightHand);
+	TraceAndGrabFromHand(OculusXRHandLeft, MotionControllerLeft, FingerCollisionLeft, HeldActorsLeftHand);
+
+	UHTBlueprintFunctionLibrary::LowPassFilter_RollingAverage(RightControllerVelocityRunningAverage,
+		MotionControllerRight->GetComponentVelocity(), RightControllerVelocityRunningAverage, VelocitySamples);
+
+	UHTBlueprintFunctionLibrary::LowPassFilter_RollingAverage(LeftControllerVelocityRunningAverage,
+		MotionControllerLeft->GetComponentVelocity(), LeftControllerVelocityRunningAverage, VelocitySamples);
+}
+
+void AHTHandsPawn::TraceAndGrabFromHand(UOculusXRHandComponent* HandComponent,
+	UMotionControllerComponent* ControllerComponent, FFingerCollisionData& FingerCollision, TArray<AActor*>& HeldActors)
+{
 	TArray<AActor*> IgnoredActors = { this };
 	const bool bDrawDebug = GDebugFingerTrace > 0;
 
-	if (OculusXRHandRight->bSkeletalMeshInitialized)
+	if (HandComponent->bSkeletalMeshInitialized)
 	{
-		FingerCollisionRight.Reset();
+		FingerCollision.Reset();
 		FHitResult HitResult;
-		if (TraceFinger(OculusXRHandRight, "Thumb Tip", IgnoredActors, bDrawDebug, HitResult))
+		if (TraceFinger(HandComponent, "Thumb Tip", IgnoredActors, bDrawDebug, HitResult))
 		{
-			TryGrabItem(FingerCollisionRight, ETargetHandLocation::Thumb, HitResult, HeldActorsRightHand);
+			TryGrabItem(HandComponent, ControllerComponent, FingerCollision, ETargetHandLocation::Thumb, HitResult, HeldActors);
 			DoFeedback(ETargetHand::Right, ETargetHandLocation::Thumb, 0.5f);
 		}
 		else
 		{
-			TryReleaseItem(FingerCollisionRight, HeldActorsRightHand);
+			TryReleaseItem(HandComponent, ControllerComponent, FingerCollision, HeldActors);
 		}
 
-		if (TraceFinger(OculusXRHandRight, "Index Tip", IgnoredActors, bDrawDebug, HitResult))
+		if (TraceFinger(HandComponent, "Index Tip", IgnoredActors, bDrawDebug, HitResult))
 		{
-			TryGrabItem(FingerCollisionRight, ETargetHandLocation::Index, HitResult, HeldActorsRightHand);
+			TryGrabItem(HandComponent, ControllerComponent, FingerCollision, ETargetHandLocation::Index, HitResult, HeldActors);
 			DoFeedback(ETargetHand::Right, ETargetHandLocation::Index, 0.5f);
 		}
 		else
 		{
-			TryReleaseItem(FingerCollisionRight, HeldActorsRightHand);
+			TryReleaseItem(HandComponent, ControllerComponent, FingerCollision, HeldActors);
 		}
 
-		if (TraceFinger(OculusXRHandRight, "Middle Tip", IgnoredActors, bDrawDebug, HitResult))
+		if (TraceFinger(HandComponent, "Middle Tip", IgnoredActors, bDrawDebug, HitResult))
 		{
-			TryGrabItem(FingerCollisionRight, ETargetHandLocation::Middle, HitResult, HeldActorsRightHand);
+			TryGrabItem(HandComponent, ControllerComponent, FingerCollision, ETargetHandLocation::Middle, HitResult, HeldActors);
 			DoFeedback(ETargetHand::Right, ETargetHandLocation::Middle, 0.5f);
 		}
 		else
 		{
-			TryReleaseItem(FingerCollisionRight, HeldActorsRightHand);
+			TryReleaseItem(HandComponent, ControllerComponent, FingerCollision, HeldActors);
 		}
 
-		if (TraceFinger(OculusXRHandRight, "Ring Tip", IgnoredActors, bDrawDebug, HitResult))
+		if (TraceFinger(HandComponent, "Ring Tip", IgnoredActors, bDrawDebug, HitResult))
 		{
-			TryGrabItem(FingerCollisionRight, ETargetHandLocation::Ring, HitResult, HeldActorsRightHand);
+			TryGrabItem(HandComponent, ControllerComponent, FingerCollision, ETargetHandLocation::Ring, HitResult, HeldActors);
 			DoFeedback(ETargetHand::Right, ETargetHandLocation::Ring, 0.5f);
 		}
 		else
 		{
-			TryReleaseItem(FingerCollisionRight, HeldActorsRightHand);
+			TryReleaseItem(HandComponent, ControllerComponent, FingerCollision, HeldActors);
 		}
 
-		if (TraceFinger(OculusXRHandRight, "Pinky Tip", IgnoredActors, bDrawDebug, HitResult))
+		if (TraceFinger(HandComponent, "Pinky Tip", IgnoredActors, bDrawDebug, HitResult))
 		{
-			TryGrabItem(FingerCollisionRight, ETargetHandLocation::Pinky, HitResult, HeldActorsRightHand);
+			TryGrabItem(HandComponent, ControllerComponent, FingerCollision, ETargetHandLocation::Pinky, HitResult, HeldActors);
 			DoFeedback(ETargetHand::Right, ETargetHandLocation::Pinky, 0.5f);
 		}
 		else
 		{
-			TryReleaseItem(FingerCollisionRight, HeldActorsRightHand);
+			TryReleaseItem(HandComponent, ControllerComponent, FingerCollision, HeldActors);
 		}
 	}
 }
@@ -132,6 +152,13 @@ void AHTHandsPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	
+}
+
+void AHTHandsPawn::GetControllerVelocitiesAveraged(FVector& OutLeftControllerVelocity,
+	FVector& OutRightControllerVelocity)
+{
+	OutLeftControllerVelocity = LeftControllerVelocityRunningAverage;
+	OutRightControllerVelocity = RightControllerVelocityRunningAverage;
 }
 
 bool AHTHandsPawn::TraceFinger(UOculusXRHandComponent* HandComponent, FName SocketName, const TArray<AActor*>& IgnoredActors, bool bDrawDebug, FHitResult& OutResult) const
@@ -167,25 +194,45 @@ bool AHTHandsPawn::AreGrabRequirementsMet(const FFingerCollisionData& FingerColl
 	return NumFingers >= RequiredPointsOfContact && HAS_REQUIRED_BITS(RequiredFingers, FingerCollision.FingersColliding);
 }
 
-void AHTHandsPawn::TryGrabItem(FFingerCollisionData& FingerCollision, ETargetHandLocation Location, const FHitResult& HitResult, TArray<AActor*>& HeldActors) const
+void AHTHandsPawn::TryGrabItem(UOculusXRHandComponent* HandComponent, UMotionControllerComponent* ControllerComponent,
+                               FFingerCollisionData& FingerCollision, ETargetHandLocation Location, const FHitResult& HitResult, TArray<AActor*>& HeldActors)
 {
-	if (HitResult.GetActor() == nullptr)
+	AActor* HitActor = HitResult.GetActor();
+	if (HitActor == nullptr)
 	{
 		return;
 	}
 
-	FingerCollision.HitActor = HitResult.GetActor();
+	/** @NOTE (Denis): This might need to be looked into, as currently we are just overriding the hit actor,
+	 * which could cause issues, by overriding the hit actor, probably a better solution would be store multiple FingerCollisionDatas
+	 * and use that to determine which actor should/should not be grabbed
+	 */
+	FingerCollision.HitActor = HitActor;
 	SET_BIT(FingerCollision.FingersColliding, Location);
 	
 	if (AreGrabRequirementsMet(FingerCollision))
 	{
-		// @TODO (Denis): This needs to be replaced by the Grab Interface function and force the object to maintain it's position, etc... relative to the hand rather than using parenting
-		HitResult.GetActor()->AttachToComponent(OculusXRHandRight, FAttachmentTransformRules::KeepWorldTransform);
+		/** @TODO (Denis): Check if the other hand is already grabbing the object and if it is, remove it from the array */
+		/** @NOTE (Denis): Currently fixed by a hack... */
+		TArray<AActor*> OtherHeldActors = HandComponent->MeshType == EOculusXRHandType::HandRight ? HeldActorsRightHand : HeldActorsLeftHand;
+		if (OtherHeldActors.Num() > 0)
+		{
+			const int32 OtherHeldActor = OtherHeldActors.Find(FingerCollision.HitActor);
+			if (OtherHeldActor != INDEX_NONE)
+			{
+				OtherHeldActors[OtherHeldActor]->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+				OtherHeldActors.RemoveAt(OtherHeldActor);
+			}
+		}
+		
+		IHTGrabbable::Execute_Grab(HitResult.GetActor(), this, ControllerComponent);
+		HitResult.GetActor()->AttachToComponent(HandComponent, FAttachmentTransformRules::KeepWorldTransform);
 		HeldActors.Add(HitResult.GetActor());
 	}
 }
 
-void AHTHandsPawn::TryReleaseItem(FFingerCollisionData& FingerCollision, TArray<AActor*>& HeldActors)
+void AHTHandsPawn::TryReleaseItem(UOculusXRHandComponent* HandComponent,  UMotionControllerComponent* ControllerComponent,
+	FFingerCollisionData& FingerCollision, TArray<AActor*>& HeldActors)
 {
 	// If grab requirements are not met, drop the items
 	if (!AreGrabRequirementsMet(FingerCollision))
@@ -197,6 +244,7 @@ void AHTHandsPawn::TryReleaseItem(FFingerCollisionData& FingerCollision, TArray<
 		}
 
 		FingerCollision.Reset();
+		HeldActors.Empty();
 	}
 }
 

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "HTTypes.h"
+#include "MotionControllerComponent.h"
 #include "GameFramework/Pawn.h"
 #include "HTHandsPawn.generated.h"
 
@@ -44,6 +45,8 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	virtual void GetControllerVelocitiesAveraged(FVector& OutLeftControllerVelocity, FVector& OutRightControllerVelocity);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -71,14 +74,28 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = HandTrackingSettings)
 	float TraceSphereRadius = 1.f;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = HandTrackingSettings)
+	float VelocitySamples = 30;
+
+	UPROPERTY(BlueprintReadOnly, Category = HandTrackingSettings)
+	FVector LeftControllerVelocityRunningAverage = FVector::ZeroVector;
+
+	UPROPERTY(BlueprintReadOnly, Category = HandTrackingSettings)
+	FVector RightControllerVelocityRunningAverage = FVector::ZeroVector;
+
 private:
 
 	static bool AreGrabRequirementsMet(const FFingerCollisionData& FingerCollision);
 
+	void TraceAndGrabFromHand(UOculusXRHandComponent* HandComponent, UMotionControllerComponent* ControllerComponent, FFingerCollisionData& FingerCollision, TArray<AActor*>& HeldActors);
 	void DoFeedback(ETargetHand Hand, ETargetHandLocation Location, float Duration) const;
 	bool TraceFinger(UOculusXRHandComponent* HandComponent, FName SocketName, const TArray<AActor*>& IgnoredActors, bool bDrawDebug, FHitResult& OutResult) const;
-	void TryGrabItem(FFingerCollisionData& FingerCollision, ETargetHandLocation Location, const FHitResult& HitResult, TArray<AActor*>& HeldActors) const;
-	void TryReleaseItem(FFingerCollisionData& FingerCollision, TArray<AActor*>& HeldActors);
+
+	void TryGrabItem(UOculusXRHandComponent* HandComponent, UMotionControllerComponent* ControllerComponent,
+		FFingerCollisionData& FingerCollision, ETargetHandLocation Location, const FHitResult& HitResult, TArray<AActor*>& HeldActors);
+	
+	void TryReleaseItem(UOculusXRHandComponent* HandComponent, UMotionControllerComponent* ControllerComponent,
+		FFingerCollisionData& FingerCollision, TArray<AActor*>& HeldActors);
 
 private:
 

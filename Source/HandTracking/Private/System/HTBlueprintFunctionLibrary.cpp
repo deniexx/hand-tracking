@@ -46,3 +46,11 @@ FString UHTBlueprintFunctionLibrary::GetStringFromFinger(ETargetHandLocation Tar
 		return FString("Unknown");
 	}
 }
+
+void UHTBlueprintFunctionLibrary::LowPassFilter_RollingAverage(const FVector& LastAverage, const FVector& NewSample,
+	FVector& NewAverage, const int32 NumSamples)
+{
+	NewAverage = LastAverage;
+	NewAverage -= NewAverage / NumSamples;
+	NewAverage += NewSample / NumSamples;
+}
