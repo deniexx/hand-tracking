@@ -89,6 +89,7 @@ void AHTHandsPawn::TraceAndGrabFromHand(UOculusXRHandComponent* HandComponent,
 {
 	TArray<AActor*> IgnoredActors = { this };
 	const bool bDrawDebug = GDebugFingerTrace > 0;
+	ETargetHand TargetHand = HandComponent->MeshType == EOculusXRHandType::HandLeft ? ETargetHand::Left : ETargetHand::Right;
 
 	if (HandComponent->bSkeletalMeshInitialized)
 	{
@@ -97,7 +98,7 @@ void AHTHandsPawn::TraceAndGrabFromHand(UOculusXRHandComponent* HandComponent,
 		if (TraceFinger(HandComponent, "Thumb Tip", IgnoredActors, bDrawDebug, HitResult))
 		{
 			TryGrabItem(HandComponent, ControllerComponent, FingerCollision, ETargetHandLocation::Thumb, HitResult, HeldActors);
-			DoFeedback(ETargetHand::Right, ETargetHandLocation::Thumb, 0.5f);
+			DoFeedback(TargetHand, ETargetHandLocation::Thumb, 0.5f);
 		}
 		else
 		{
@@ -107,7 +108,7 @@ void AHTHandsPawn::TraceAndGrabFromHand(UOculusXRHandComponent* HandComponent,
 		if (TraceFinger(HandComponent, "Index Tip", IgnoredActors, bDrawDebug, HitResult))
 		{
 			TryGrabItem(HandComponent, ControllerComponent, FingerCollision, ETargetHandLocation::Index, HitResult, HeldActors);
-			DoFeedback(ETargetHand::Right, ETargetHandLocation::Index, 0.5f);
+			DoFeedback(TargetHand, ETargetHandLocation::Index, 0.5f);
 		}
 		else
 		{
@@ -117,7 +118,7 @@ void AHTHandsPawn::TraceAndGrabFromHand(UOculusXRHandComponent* HandComponent,
 		if (TraceFinger(HandComponent, "Middle Tip", IgnoredActors, bDrawDebug, HitResult))
 		{
 			TryGrabItem(HandComponent, ControllerComponent, FingerCollision, ETargetHandLocation::Middle, HitResult, HeldActors);
-			DoFeedback(ETargetHand::Right, ETargetHandLocation::Middle, 0.5f);
+			DoFeedback(TargetHand, ETargetHandLocation::Middle, 0.5f);
 		}
 		else
 		{
@@ -127,7 +128,7 @@ void AHTHandsPawn::TraceAndGrabFromHand(UOculusXRHandComponent* HandComponent,
 		if (TraceFinger(HandComponent, "Ring Tip", IgnoredActors, bDrawDebug, HitResult))
 		{
 			TryGrabItem(HandComponent, ControllerComponent, FingerCollision, ETargetHandLocation::Ring, HitResult, HeldActors);
-			DoFeedback(ETargetHand::Right, ETargetHandLocation::Ring, 0.5f);
+			DoFeedback(TargetHand, ETargetHandLocation::Ring, 0.5f);
 		}
 		else
 		{
@@ -137,7 +138,7 @@ void AHTHandsPawn::TraceAndGrabFromHand(UOculusXRHandComponent* HandComponent,
 		if (TraceFinger(HandComponent, "Pinky Tip", IgnoredActors, bDrawDebug, HitResult))
 		{
 			TryGrabItem(HandComponent, ControllerComponent, FingerCollision, ETargetHandLocation::Pinky, HitResult, HeldActors);
-			DoFeedback(ETargetHand::Right, ETargetHandLocation::Pinky, 0.5f);
+			DoFeedback(TargetHand, ETargetHandLocation::Pinky, 0.5f);
 		}
 		else
 		{
