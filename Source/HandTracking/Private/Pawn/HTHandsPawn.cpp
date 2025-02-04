@@ -5,10 +5,13 @@
 
 #include <bit>
 
+#include "HandGestureRecognizer.h"
 #include "OculusXRHandComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "MotionControllerComponent.h"
 #include "Camera/CameraComponent.h"
+#include "HandInput/CameraHandInput.h"
+#include "HandTracking/HandTracking.h"
 #include "Interfaces/HTGrabbable.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "System/HTBlueprintFunctionLibrary.h"
@@ -18,8 +21,18 @@ static FAutoConsoleVariableRef CVarShowDebugFingerTrace(
 	TEXT("ShowDebug.FingerTrace"),
 	GDebugFingerTrace,
 	TEXT("Draws debug info for Finger Traces")
-	TEXT("0 - Do not draw debug info")
-	TEXT("1 - Draw debug info"),
+	TEXT("	0 - Do not draw debug info")
+	TEXT("	1 - Draw debug info"),
+	ECVF_Cheat
+);
+
+int32 GProcessHandLogInput = 0;
+static FAutoConsoleVariableRef CVarProcessHandLogInput(
+	TEXT("Debug.ProcessHandLog"),
+	GProcessHandLogInput,
+	TEXT("Processes the input for logging hand poses")
+	TEXT("	0 - Do not process")
+	TEXT("	1 - Process"),
 	ECVF_Cheat
 );
 
@@ -38,14 +51,32 @@ AHTHandsPawn::AHTHandsPawn()
 	OculusXRHandLeft = CreateDefaultSubobject<UOculusXRHandComponent>("OculusXRHandLeft");
 	OculusXRHandRight = CreateDefaultSubobject<UOculusXRHandComponent>("OculusXRHandRight");
 
+	HandPoseRecognizerLeft = CreateDefaultSubobject<UHandPoseRecognizer>("HandPoseRecognizerLeft");
+	HandPoseRecognizerRight = CreateDefaultSubobject<UHandPoseRecognizer>("HandPoseRecognizerRight");
+
+	HandGestureRecognizerLeft = CreateDefaultSubobject<UHandGestureRecognizer>("HandGestureRecognizerLeft");
+	HandGestureRecognizerRight = CreateDefaultSubobject<UHandGestureRecognizer>("HandGestureRecognizerRight");
+
+	CameraHandInputLeft = CreateDefaultSubobject<UCameraHandInput>("CameraHandInputLeft");
+	CameraHandInputRight = CreateDefaultSubobject<UCameraHandInput>("CameraHandInputRight");
+
 	MotionControllerLeft->SetupAttachment(GetRootComponent());
 	MotionControllerRight->SetupAttachment(GetRootComponent());
-
+	
 	OculusXRHandLeft->SetupAttachment(MotionControllerLeft);
 	OculusXRHandRight->SetupAttachment(MotionControllerRight);
 
 	MotionControllerLeft->SetTrackingMotionSource("Left");
 	MotionControllerRight->SetTrackingMotionSource("Right");
+
+	HandPoseRecognizerLeft->Side = EOculusXRHandType::HandLeft;
+	HandPoseRecognizerRight->Side = EOculusXRHandType::HandRight;
+	
+	HandPoseRecognizerLeft->SetupAttachment(MotionControllerLeft);
+	HandPoseRecognizerRight->SetupAttachment(MotionControllerRight);
+
+	HandGestureRecognizerLeft->SetupAttachment(HandPoseRecognizerLeft);
+	HandGestureRecognizerRight->SetupAttachment(HandPoseRecognizerRight);
 	
 	OculusXRHandLeft->SkeletonType = EOculusXRHandType::HandLeft;
 	OculusXRHandRight->SkeletonType = EOculusXRHandType::HandRight;
@@ -67,6 +98,11 @@ void AHTHandsPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (GProcessHandLogInput)
+	{
+		ProcessHandLogInput();
+	}
+
 	/** @NOTE (Denis): This introduces left hand bias, which has some issues described below:
 	 * If you are holding an object with the right hand and then try to take it with the left, that will work
 	 * But if you are holding an object with the left and try to take it with the right, it will fail, as the Left hand is checked after the right
@@ -87,7 +123,22 @@ void AHTHandsPawn::Tick(float DeltaTime)
 void AHTHandsPawn::TraceAndGrabFromHand(UOculusXRHandComponent* HandComponent,
 	UMotionControllerComponent* ControllerComponent, FFingerCollisionData& FingerCollision, TArray<AActor*>& HeldActors)
 {
-	TArray<AActor*> IgnoredActors = { this };
+	if (HandComponent->MeshType == EOculusXRHandType::HandRight)
+	{
+		if (CameraHandInputRight->IsPinching() || CameraHandInputRight->IsInGrabPose())
+		{
+			TryGrabItemFromPose(ControllerComponent, HandComponent, HeldActors);
+		}
+	}
+	else
+	{
+		if (CameraHandInputLeft->IsPinching() || CameraHandInputLeft->IsInGrabPose())
+		{
+			TryGrabItemFromPose(ControllerComponent, HandComponent, HeldActors);
+		}		
+	}
+	
+	/*TArray<AActor*> IgnoredActors = { this };
 	const bool bDrawDebug = GDebugFingerTrace > 0;
 	ETargetHand TargetHand = HandComponent->MeshType == EOculusXRHandType::HandLeft ? ETargetHand::Left : ETargetHand::Right;
 
@@ -144,7 +195,7 @@ void AHTHandsPawn::TraceAndGrabFromHand(UOculusXRHandComponent* HandComponent,
 		{
 			TryReleaseItem(HandComponent, ControllerComponent, FingerCollision, HeldActors);
 		}
-	}
+	}*/
 }
 
 // Called to bind functionality to input
@@ -232,8 +283,26 @@ void AHTHandsPawn::TryGrabItem(UOculusXRHandComponent* HandComponent, UMotionCon
 	}
 }
 
+void AHTHandsPawn::TryGrabItemFromPose(UMotionControllerComponent* ControllerComponent, UOculusXRHandComponent* HandComponent, TArray<AActor*>& HeldActors)
+{
+	const bool bDrawDebug = GDebugFingerTrace > 0;
+	const EDrawDebugTrace::Type DrawDebug = bDrawDebug ? EDrawDebugTrace::ForOneFrame : EDrawDebugTrace::None;
+	const FVector TraceStart = HandComponent->GetSocketLocation(FName("Palm"));
+	TArray<AActor*> IgnoredActors = { this };
+	FHitResult OutResult;
+	if (UKismetSystemLibrary::SphereTraceSingleForObjects(this, TraceStart, TraceStart, 12,
+		TraceChannels, false, IgnoredActors, DrawDebug, OutResult, true))
+	{
+		AActor* HitActor = OutResult.GetActor();
+		if (HitActor != nullptr)
+		{
+			HitActor->AttachToComponent(HandComponent, FAttachmentTransformRules::KeepWorldTransform);
+		}
+	}
+}
+
 void AHTHandsPawn::TryReleaseItem(UOculusXRHandComponent* HandComponent,  UMotionControllerComponent* ControllerComponent,
-	FFingerCollisionData& FingerCollision, TArray<AActor*>& HeldActors)
+                                  FFingerCollisionData& FingerCollision, TArray<AActor*>& HeldActors)
 {
 	// If grab requirements are not met, drop the items
 	if (!AreGrabRequirementsMet(FingerCollision))
@@ -247,5 +316,28 @@ void AHTHandsPawn::TryReleaseItem(UOculusXRHandComponent* HandComponent,  UMotio
 		FingerCollision.Reset();
 		HeldActors.Empty();
 	}
+}
+
+void AHTHandsPawn::ProcessHandLogInput()
+{
+	/** Check if the appropriate key is pressed and log the hand pose in the editor with a label of which hand */
+	APlayerController* PlayerController = GetController<APlayerController>();
+
+	if (PlayerController->IsInputKeyDown(LogLeftHandPoseKey))
+	{
+		UE_LOG(LogHandTracking, Log, TEXT("=================================================================="));
+		UE_LOG(LogHandTracking, Log, TEXT("Left Hand Pose:"));
+		HandPoseRecognizerLeft->LogEncodedHandPose();
+		UE_LOG(LogHandTracking, Log, TEXT("=================================================================="));
+	}
+	
+	if (PlayerController->IsInputKeyDown(LogRightHandPoseKey))
+	{
+		UE_LOG(LogHandTracking, Log, TEXT("=================================================================="));
+		UE_LOG(LogHandTracking, Log, TEXT("Right Hand Pose:"));
+		HandPoseRecognizerRight->LogEncodedHandPose();
+		UE_LOG(LogHandTracking, Log, TEXT("=================================================================="));
+	}
+	
 }
 

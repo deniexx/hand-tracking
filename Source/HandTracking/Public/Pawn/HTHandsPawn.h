@@ -5,9 +5,13 @@
 #include "CoreMinimal.h"
 #include "HTTypes.h"
 #include "MotionControllerComponent.h"
+#include "OculusXRHandComponent.h"
 #include "GameFramework/Pawn.h"
 #include "HTHandsPawn.generated.h"
 
+class UCameraHandInput;
+class UHandPoseRecognizer;
+class UHandGestureRecognizer;
 class USphereComponent;
 class UCameraComponent;
 class UMotionControllerComponent;
@@ -68,6 +72,24 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components)
 	UOculusXRHandComponent* OculusXRHandRight;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components)
+	UHandPoseRecognizer* HandPoseRecognizerLeft;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components)
+	UHandPoseRecognizer* HandPoseRecognizerRight;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components)
+	UHandGestureRecognizer* HandGestureRecognizerLeft;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components)
+	UHandGestureRecognizer* HandGestureRecognizerRight;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components)
+	UCameraHandInput* CameraHandInputLeft;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components)
+	UCameraHandInput* CameraHandInputRight;	
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = HandTrackingSettings)
 	TArray<TEnumAsByte<EObjectTypeQuery>> TraceChannels;
 	
@@ -77,6 +99,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = HandTrackingSettings)
 	float VelocitySamples = 30;
 
+	UPROPERTY(EditDefaultsOnly, Category = HandTrackingSettings)
+	FKey LogLeftHandPoseKey;
+
+	UPROPERTY(EditDefaultsOnly, Category = HandTrackingSettings)
+	FKey LogRightHandPoseKey;
+	
 	UPROPERTY(BlueprintReadOnly, Category = HandTrackingSettings)
 	FVector LeftControllerVelocityRunningAverage = FVector::ZeroVector;
 
@@ -84,7 +112,7 @@ protected:
 	FVector RightControllerVelocityRunningAverage = FVector::ZeroVector;
 
 private:
-
+	
 	static bool AreGrabRequirementsMet(const FFingerCollisionData& FingerCollision);
 
 	void TraceAndGrabFromHand(UOculusXRHandComponent* HandComponent, UMotionControllerComponent* ControllerComponent, FFingerCollisionData& FingerCollision, TArray<AActor*>& HeldActors);
@@ -93,9 +121,13 @@ private:
 
 	void TryGrabItem(UOculusXRHandComponent* HandComponent, UMotionControllerComponent* ControllerComponent,
 		FFingerCollisionData& FingerCollision, ETargetHandLocation Location, const FHitResult& HitResult, TArray<AActor*>& HeldActors);
+
+	void TryGrabItemFromPose(UMotionControllerComponent* ControllerComponent, UOculusXRHandComponent* HandComponent, TArray<AActor*>& HeldActors);
 	
 	void TryReleaseItem(UOculusXRHandComponent* HandComponent, UMotionControllerComponent* ControllerComponent,
 		FFingerCollisionData& FingerCollision, TArray<AActor*>& HeldActors);
+
+	void ProcessHandLogInput();
 
 private:
 
@@ -104,6 +136,9 @@ private:
 
 	UPROPERTY()
 	TArray<AActor*> HeldActorsLeftHand;
+
+	FString LastLeftPoseRecognised = FString("");
+	FString LastRightPoseRecognised = FString("");
 
 	FFingerCollisionData FingerCollisionLeft;
 	FFingerCollisionData FingerCollisionRight;
