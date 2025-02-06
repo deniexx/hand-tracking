@@ -58,6 +58,19 @@ bool AInteractable::IsSelected() const
 	return Selectors.Num() > 0;
 }
 
+void AInteractable::Interaction1_Implementation()
+{
+	
+}
+
+void AInteractable::Interaction2_Implementation()
+{
+}
+
+void AInteractable::Interaction3_Implementation()
+{
+}
+
 const TArray<AInteractableSelector*>& AInteractable::GetSelectors() const
 {
 	return Selectors;
@@ -110,4 +123,14 @@ void AInteractable::SelectGrabPose(EHandSide Side, bool& GrabPoseFound, FString&
 			GrabPoseFound = false;
 		}
 	}
+}
+
+bool AInteractable::CanBeGrabbed() const
+{
+	return bCanBeGrabbed;
+}
+
+void AInteractable::SetCanBeGrabbed(const bool bNewValue)
+{
+	bCanBeGrabbed = bNewValue;
 }

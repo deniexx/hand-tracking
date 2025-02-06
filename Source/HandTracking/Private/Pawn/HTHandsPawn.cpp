@@ -62,6 +62,9 @@ AHTHandsPawn::AHTHandsPawn()
 
 	MotionControllerLeft->SetupAttachment(GetRootComponent());
 	MotionControllerRight->SetupAttachment(GetRootComponent());
+
+	CameraHandInputLeft->SetHand(EControllerHand::Left);
+	CameraHandInputRight->SetHand(EControllerHand::Right);
 	
 	OculusXRHandLeft->SetupAttachment(MotionControllerLeft);
 	OculusXRHandRight->SetupAttachment(MotionControllerRight);

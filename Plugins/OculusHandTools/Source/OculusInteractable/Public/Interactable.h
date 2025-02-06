@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InteractableCustomTypes.h"
 #include "GameFramework/Actor.h"
 #include "InteractablePose.h"
 #include "Interactable.generated.h"
@@ -68,21 +69,21 @@ public:
 	 * Optional generic user event.
 	 * The meaning, implementation and invocation is left to the user.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void Interaction1();
 
 	/**
 	 * Optional generic user event.
 	 * The meaning, implementation and invocation is left to the user.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void Interaction2();
 
 	/**
 	 * Optional generic user event.
 	 * The meaning, implementation and invocation is left to the user.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void Interaction3();
 
 	/**
@@ -127,7 +128,20 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Interactable Grab Pose")
 	void SelectGrabPose(EHandSide Side, bool& GrabPoseFound, FString& GrabPoseName, FTransform& GrabTransform, FString& GrabHandPose);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	bool CanBeGrabbed() const;
+
+	UFUNCTION(BlueprintCallable)
+	void SetCanBeGrabbed(const bool bNewValue);
+	
 protected:
+
+	UPROPERTY(EditAnywhere)
+	bool bCanBeGrabbed = true;
+
+	UPROPERTY(BlueprintReadWrite)
+	EGrabHand GrabHand = EGrabHand::None;	
+	
 	/** List of selectors currently selecting us. */
 	TArray<AInteractableSelector*> Selectors;
 };

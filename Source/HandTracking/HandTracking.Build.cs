@@ -9,7 +9,7 @@ public class HandTracking : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay", "OculusXRInput", "SerialCom", 
-			"OculusHandPoseRecognition", "HandInput", "OculusInteractable", "OculusUtils" });
+			"OculusHandPoseRecognition", "HandInput", "OculusInteractable", "OculusUtils", "GameplayTags" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "XRBase" });
 

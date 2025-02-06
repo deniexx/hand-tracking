@@ -24,7 +24,7 @@ AInteractable* UHandGrabbingComponent::TryGrab(FTransform GrabTransform)
 				if (Interactable && Interactable->IsMovable())
 				{
 					auto Distance = FVector::Dist(GrabTransform.GetLocation(), Interactable->GetActorLocation());
-					if (ClosestInteractable == nullptr || Distance < DistanceToClosestInteractable)
+					if ((ClosestInteractable == nullptr || Distance < DistanceToClosestInteractable) && Interactable->CanBeGrabbed())
 					{
 						ClosestInteractable = Interactable;
 						DistanceToClosestInteractable = Distance;
@@ -33,7 +33,7 @@ AInteractable* UHandGrabbingComponent::TryGrab(FTransform GrabTransform)
 			}
 		}
 
-		if (ClosestInteractable)
+		if (ClosestInteractable && ClosestInteractable->CanBeGrabbed())
 		{
 			auto InteractableRoot = ClosestInteractable->GetRootComponent();
 

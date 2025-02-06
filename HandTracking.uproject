@@ -10,7 +10,9 @@
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
 				"Engine",
-                "XRBase"
+				"XRBase",
+				"OculusInteractable",
+				"CoreUObject"
 			]
 		}
 	],
