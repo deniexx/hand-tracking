@@ -5,19 +5,25 @@
 
 #include "Tasks/HTTaskObjective.h"
 
-void UHTTask::BeginTask(UObject* WorldContext)
+void UHTTask::BeginNextObjective(UObject* WorldContext)
 {
-	for (const auto Objective : Objectives)
+	if (CurrentObjective == Objectives.Num())
 	{
-		Objective->OnObjectiveCompleted.AddDynamic(this, &ThisClass::OnObjectiveCompleted);
-		Objective->Activate(WorldContext);
+		return;
 	}
+
+	Objectives[CurrentObjective]->Activate(WorldContext);
+	Objectives[CurrentObjective]->OnObjectiveCompleted.AddDynamic(this, &ThisClass::OnObjectiveCompleted);
 }
 
 void UHTTask::OnObjectiveCompleted(UHTTaskObjective* Objective)
 {
 	/** Clear delegate */
 	Objective->OnObjectiveCompleted.RemoveDynamic(this, &ThisClass::OnObjectiveCompleted);
+
+	/** Broadcast our own, and increment objective counter */
+	OnTaskObjectiveCompleted.Broadcast(Objective, CurrentObjective);
+	++CurrentObjective;
 	
 	/** Check if all objectives are completed */
 	/** @NOTE (Denis): Could be optimized by keeping a running total of completed objectives, but is probably not required

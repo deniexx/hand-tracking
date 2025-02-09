@@ -6,18 +6,30 @@
 #include "EngineUtils.h"
 #include "Actor/HTTaskActor.h"
 
-
 void UHTTaskObjective::Activate_Implementation(UObject* InWorldContextManual)
 {
 	if (!IsWaitingToStart())
 	{
 		return;
 	}
-	
+
+	WorldContextManual = InWorldContextManual;
 	TrackedData = FString();
 	State = EObjectiveState::InProgress;
-	WorldContextManual = InWorldContextManual;
+	
+	SpawnTaskActors();
 	OnObjectiveStarted.Broadcast(this);
+}
+
+void UHTTaskObjective::Complete_Implementation()
+{
+	if (!IsInProgress())
+	{
+		return;
+	}
+
+	State = EObjectiveState::Completed;
+	OnObjectiveCompleted.Broadcast(this);
 }
 
 EObjectiveState UHTTaskObjective::GetObjectiveState() const
@@ -28,17 +40,6 @@ EObjectiveState UHTTaskObjective::GetObjectiveState() const
 const FString& UHTTaskObjective::GetTrackedData() const
 {
 	return TrackedData;
-}
-
-void UHTTaskObjective::Complete()
-{
-	if (!IsInProgress())
-	{
-		return;
-	}
-
-	State = EObjectiveState::Completed;
-	OnObjectiveCompleted.Broadcast(this);
 }
 
 bool UHTTaskObjective::IsComplete() const
@@ -54,6 +55,37 @@ bool UHTTaskObjective::IsInProgress() const
 bool UHTTaskObjective::IsWaitingToStart() const
 {
 	return State == EObjectiveState::WaitingToStart;
+}
+
+void UHTTaskObjective::CleanUp()
+{
+	for (auto& SpawnedActor : SpawnedActors)
+	{
+		if (IsValid(SpawnedActor))
+		{
+			SpawnedActor->Destroy();
+		}
+	}
+
+	SpawnedActors.Empty();
+}
+
+void UHTTaskObjective::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
+{
+	UObject::PostEditChangeProperty(PropertyChangedEvent);
+
+	const FName PropertyName = PropertyChangedEvent.GetPropertyName();
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(FObjectiveActor, InstanceCount))
+	{
+		/** Validate all entries */
+		for (auto& ObjectiveActor : ObjectiveActors)
+		{
+			if (!ObjectiveActor.bUseArrayCountAsInstanceCount)
+			{
+				ObjectiveActor.InstanceCount = FMath::Min(ObjectiveActor.InstanceCount, ObjectiveActor.SpawnTransforms.Num());
+			}
+		}
+	}
 }
 
 TArray<AHTTaskActor*> UHTTaskObjective::GatherTaskActors() const
@@ -72,4 +104,52 @@ TArray<AHTTaskActor*> UHTTaskObjective::GatherTaskActors() const
 	}
 
 	return RelativeTaskActors;
+}
+
+void UHTTaskObjective::SpawnTaskActors()
+{
+	if (ObjectiveActors.Num() == 0)
+	{
+		/** No actors to spawn so no need to run anything else */
+		return;
+	}
+	
+	UWorld* World = WorldContextManual->GetWorld();
+	ensureAlways(World);
+	
+	for (const auto& ObjectiveActor : ObjectiveActors)
+	{
+		TArray<int32> UsedIndices;
+		const int32 FinalIndex = ObjectiveActor.bUseArrayCountAsInstanceCount ?
+			ObjectiveActor.SpawnTransforms.Num() : ObjectiveActor.InstanceCount;
+		
+		for (int32 Idx = 0; Idx < FinalIndex; ++Idx)
+		{
+			FTransform SpawnTransform = ObjectiveActor.SpawnTransforms[Idx];
+
+			if (!ObjectiveActor.bUseArrayCountAsInstanceCount)
+			{
+				int32 UnusedIndex = GetUnusedIndex(UsedIndices, ObjectiveActor.InstanceCount);
+				SpawnTransform = ObjectiveActor.SpawnTransforms[UnusedIndex];
+			}
+			
+			AHTTaskActor* SpawnedActor = World->SpawnActorDeferred<AHTTaskActor>(ObjectiveActor.ActorTemplate,
+				SpawnTransform, nullptr, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+
+			SpawnedActor->FinishSpawning(SpawnTransform);
+			SpawnedActors.Add(SpawnedActor);
+		}
+	}
+}
+
+int32 UHTTaskObjective::GetUnusedIndex(TArray<int32>& UsedIndices, int32 MaxNumber)
+{
+	int32 RandomIndex = FMath::RandRange(0, MaxNumber - 1);
+	if (UsedIndices.Find(RandomIndex) == INDEX_NONE)
+	{
+		UsedIndices.Add(RandomIndex);
+		return RandomIndex;
+	}
+
+	return GetUnusedIndex(UsedIndices, MaxNumber);
 }

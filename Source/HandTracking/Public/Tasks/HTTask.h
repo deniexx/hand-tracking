@@ -6,9 +6,11 @@
 #include "UObject/NoExportTypes.h"
 #include "HTTask.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTaskCompleted, UHTTask*, Task);
-
 class UHTTaskObjective;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTaskCompleted, UHTTask*, Task);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnTaskObjectiveCompleted, UHTTaskObjective*, Objective, int32, ObjectiveIndex);
+
 /**
  *
  */
@@ -19,15 +21,22 @@ class HANDTRACKING_API UHTTask : public UObject
 
 public:
 
-	UPROPERTY(EditAnywhere, Category = "Task")
-	TArray<UHTTaskObjective*> Objectives;
-
-	/** Calls begin on all objectives and subscribes to their delegates */
 	UFUNCTION(BlueprintCallable, Category = "Task", meta = (DefaultToSelf = "WorldContext"))
-	void BeginTask(UObject* WorldContext);
+	void BeginNextObjective(UObject* WorldContext);
 
 	UPROPERTY(BlueprintAssignable, Category = "Task")
 	FOnTaskCompleted OnCompleted;
+
+	UPROPERTY(BlueprintAssignable, Category = "Task")
+	FOnTaskObjectiveCompleted OnTaskObjectiveCompleted;
+	
+protected:
+
+	UPROPERTY(EditAnywhere, Category = "Task")
+	TArray<UHTTaskObjective*> Objectives;
+
+	UPROPERTY()
+	int32 CurrentObjective;
 	
 private:
 
