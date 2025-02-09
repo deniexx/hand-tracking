@@ -6,6 +6,11 @@
 #include "Actor/HTTaskActor.h"
 #include "HandTracking/HandTracking.h"
 
+ULocationRotationAlignment::ULocationRotationAlignment()
+{
+	bAutoComplete = false;
+}
+
 void ULocationRotationAlignment::Activate_Implementation(UObject* InWorldContextManual)
 {
 	Super::Activate_Implementation(InWorldContextManual);
@@ -40,6 +45,19 @@ void ULocationRotationAlignment::Activate_Implementation(UObject* InWorldContext
 	}
 }
 
+void ULocationRotationAlignment::Complete_Implementation()
+{
+	TrackedData.Empty();
+	for (const auto& SolutionToTarget : SolutionsToTargets)
+	{
+		
+		//TrackedData.Append()
+	}
+	
+	/** Last as we want to broadcast after we have finished here */
+	Super::Complete_Implementation();
+}
+
 void ULocationRotationAlignment::OnSolutionActorDropped(AHTTaskActor* TaskActor)
 {
 	for (const auto SolutionToTarget : SolutionsToTargets)
@@ -48,13 +66,16 @@ void ULocationRotationAlignment::OnSolutionActorDropped(AHTTaskActor* TaskActor)
 		{
 			const FVector ToTarget = SolutionToTarget.Key->GetActorLocation() - SolutionToTarget.Value->GetActorLocation();
 			const float Distance = ToTarget.Length();
-
+			
 			if (Distance > MinimumAcceptableDistance)
 			{
+				// Yellow-y orange
+				SetMaterialColor(TaskActor, FVector(0.244792f, 0.223655f, 0.000000f));
 				return;
 			}
 
-			/** Check the distance and process the dropping of the object, also deny grabbing */
+			// Green
+			SetMaterialColor(TaskActor, FVector(0.000000f, 0.244792f, 0.000000f));
 			UE_LOG(LogHandTracking, Log, TEXT("SolutionActorDropped kinda close to the TargetActor"));
 		}
 	}

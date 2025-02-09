@@ -70,6 +70,13 @@ void UHTTaskObjective::CleanUp()
 	SpawnedActors.Empty();
 }
 
+void UHTTaskObjective::SetMaterialColor(const AHTTaskActor* TaskActor, const FVector& MaterialColor)
+{
+	UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(TaskActor->GetRootComponent());
+	UMaterialInstanceDynamic* Material = Cast<UMaterialInstanceDynamic>(PrimitiveComponent->GetMaterial(0));
+	Material->SetVectorParameterValue("HologramColor", MaterialColor);
+}
+
 void UHTTaskObjective::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
 	UObject::PostEditChangeProperty(PropertyChangedEvent);

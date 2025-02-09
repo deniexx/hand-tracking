@@ -77,6 +77,8 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Objective")
 	FOnObjectiveStatusUpdated OnObjectiveCompleted;
+	
+	static void SetMaterialColor(const AHTTaskActor* TaskActor, const FVector& MaterialColor);
 
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
@@ -99,6 +101,10 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objective")
 	TArray<FObjectiveActor> ObjectiveActors;
+
+	/** Whether or not to complete the objective, once all requirement have been met, or require user to complete it */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objective")
+	bool bAutoComplete = true;
 
 	UPROPERTY()
 	TArray<AHTTaskActor*> SpawnedActors;

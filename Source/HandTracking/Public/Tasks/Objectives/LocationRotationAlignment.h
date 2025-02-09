@@ -15,7 +15,12 @@ class HANDTRACKING_API ULocationRotationAlignment : public UHTTaskObjective
 	GENERATED_BODY()
 
 public:
+
+	ULocationRotationAlignment();
+	
 	virtual void Activate_Implementation(UObject* InWorldContextManual) override;
+
+	virtual void Complete_Implementation() override;
 
 	/** Objects that user should place into the targets */
 	UPROPERTY(EditAnywhere, Category = "Objective")

@@ -24,6 +24,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Task", meta = (DefaultToSelf = "WorldContext"))
 	void BeginNextObjective(UObject* WorldContext);
 
+	UFUNCTION(BlueprintCallable, Category = "Task")
+	void CompleteCurrentObjective();
+
 	UPROPERTY(BlueprintAssignable, Category = "Task")
 	FOnTaskCompleted OnCompleted;
 

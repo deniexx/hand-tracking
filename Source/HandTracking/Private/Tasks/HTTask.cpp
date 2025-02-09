@@ -3,6 +3,7 @@
 
 #include "Tasks/HTTask.h"
 
+#include "EntitySystem/MovieSceneEntityManager.h"
 #include "Tasks/HTTaskObjective.h"
 
 void UHTTask::BeginNextObjective(UObject* WorldContext)
@@ -14,6 +15,21 @@ void UHTTask::BeginNextObjective(UObject* WorldContext)
 
 	Objectives[CurrentObjective]->Activate(WorldContext);
 	Objectives[CurrentObjective]->OnObjectiveCompleted.AddDynamic(this, &ThisClass::OnObjectiveCompleted);
+}
+
+void UHTTask::CompleteCurrentObjective()
+{
+	if (CurrentObjective == Objectives.Num())
+	{
+		return;
+	}
+
+	if (!Objectives[CurrentObjective]->IsInProgress())
+	{
+		return;
+	}
+
+	Objectives[CurrentObjective]->Complete();
 }
 
 void UHTTask::OnObjectiveCompleted(UHTTaskObjective* Objective)
