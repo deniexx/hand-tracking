@@ -24,6 +24,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Task", meta = (DefaultToSelf = "WorldContext"))
 	void BeginNextObjective(UObject* WorldContext);
 
+	UFUNCTION(BlueprintCallable, Category = "Task", meta = (DefaultToSelf = "WorldContext"))
+	void CompleteOrBeginNextObjective(UObject* WorldContext);
+	
 	UFUNCTION(BlueprintCallable, Category = "Task")
 	void CompleteCurrentObjective();
 
@@ -32,13 +35,16 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Task")
 	FOnTaskObjectiveCompleted OnTaskObjectiveCompleted;
+
+	UPROPERTY(BlueprintAssignable, Category = "Task")
+	FOnTaskObjectiveCompleted OnObjectiveStarted;
 	
 protected:
 
 	UPROPERTY(EditAnywhere, Category = "Task")
 	TArray<UHTTaskObjective*> Objectives;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, Category = "Task")
 	int32 CurrentObjective;
 	
 private:

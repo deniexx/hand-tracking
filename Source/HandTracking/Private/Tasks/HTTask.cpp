@@ -15,6 +15,24 @@ void UHTTask::BeginNextObjective(UObject* WorldContext)
 
 	Objectives[CurrentObjective]->Activate(WorldContext);
 	Objectives[CurrentObjective]->OnObjectiveCompleted.AddDynamic(this, &ThisClass::OnObjectiveCompleted);
+	OnObjectiveStarted.Broadcast(Objectives[CurrentObjective], CurrentObjective);
+}
+
+void UHTTask::CompleteOrBeginNextObjective(UObject* WorldContext)
+{
+	if (CurrentObjective == Objectives.Num())
+	{
+		return;
+	}
+
+	if (!Objectives[CurrentObjective]->IsInProgress())
+	{
+		BeginNextObjective(WorldContext);
+	}
+	else
+	{
+		CompleteCurrentObjective();
+	}
 }
 
 void UHTTask::CompleteCurrentObjective()

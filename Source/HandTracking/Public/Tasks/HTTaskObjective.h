@@ -22,6 +22,10 @@ struct FObjectiveActor
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	bool bUseArrayCountAsInstanceCount = true;
+
+	/** Should rotation be randomized on spawn */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool bRandomSpawnRotation = false;
 	
 	/** This is here so that we can either use a random transform from the array or spawn all the instances from the array */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (EditConditionHides = true, EditCondition = "bUseArrayCountAsInstanceCount == false"))

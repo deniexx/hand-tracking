@@ -139,6 +139,12 @@ void UHTTaskObjective::SpawnTaskActors()
 				int32 UnusedIndex = GetUnusedIndex(UsedIndices, ObjectiveActor.InstanceCount);
 				SpawnTransform = ObjectiveActor.SpawnTransforms[UnusedIndex];
 			}
+
+			if (ObjectiveActor.bRandomSpawnRotation)
+			{
+				FVector RandomVector = FMath::VRand();
+				SpawnTransform.SetRotation(RandomVector.ToOrientationQuat());
+			}
 			
 			AHTTaskActor* SpawnedActor = World->SpawnActorDeferred<AHTTaskActor>(ObjectiveActor.ActorTemplate,
 				SpawnTransform, nullptr, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);

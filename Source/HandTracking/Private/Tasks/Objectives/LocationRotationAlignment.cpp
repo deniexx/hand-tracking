@@ -39,6 +39,8 @@ void ULocationRotationAlignment::Activate_Implementation(UObject* InWorldContext
 			{
 				SolutionActor->OnDropped.AddDynamic(this, &ThisClass::OnSolutionActorDropped);
 				SolutionsToTargets.Add( { SolutionActor, TargetActor } );
+				UPrimitiveComponent* Component = Cast<UPrimitiveComponent>(SolutionActor->GetRootComponent());
+				Component->CreateAndSetMaterialInstanceDynamic(0);
 				break;
 			}
 		}
