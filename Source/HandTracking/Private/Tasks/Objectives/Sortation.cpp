@@ -11,15 +11,14 @@ void USortation::Activate_Implementation(UObject* InWorldContextManual)
 	Super::Activate_Implementation(InWorldContextManual);
 
 	int32 CountToHalf = 0;
-
-	/** Must be set-up this way, not ideal, but hey */
 	const int32 HalfObjects = NumberOfSortables / 2;
+
 	UWorld* World = WorldContextManual->GetWorld();
-	for (int32 Idx = 0; Idx < NumberOfSortables - 2; ++Idx)
+	for (int32 Idx = 0; Idx < NumberOfSortables - 1; ++Idx)
 	{
 		AHTTaskActor* SpawnedActor = World->SpawnActorDeferred<AHTTaskActor>(ObjectiveActors[2].ActorTemplate,
 			ObjectiveActors[2].SpawnTransforms[0], nullptr, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
-
+		
 		SpawnedActor->FinishSpawning(ObjectiveActors[2].SpawnTransforms[0]);
 		SpawnedActors.Add(SpawnedActor);
 	}
@@ -47,6 +46,17 @@ void USortation::Activate_Implementation(UObject* InWorldContextManual)
 			++LastIndex;
 		}
 	}
+}
+
+void USortation::Complete_Implementation()
+{
+	if (ObjectsSortedCorrectly + ObjectsSortedIncorrectly < NumberOfSortables)
+	{
+		// Do not allow user to continue, unless all balls have been sorted
+		return;
+	}
+	
+	Super::Complete_Implementation();
 }
 
 void USortation::SetActorMaterial(AHTTaskActor* TaskActor, UMaterialInterface* Material)

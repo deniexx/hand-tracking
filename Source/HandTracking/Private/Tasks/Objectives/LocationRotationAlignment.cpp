@@ -52,8 +52,14 @@ void ULocationRotationAlignment::Complete_Implementation()
 	TrackedData.Empty();
 	for (const auto& SolutionToTarget : SolutionsToTargets)
 	{
-		
-		//TrackedData.Append()
+		const FVector ToTarget = SolutionToTarget.Key->GetActorLocation() - SolutionToTarget.Value->GetActorLocation();
+		const float Distance = ToTarget.Length();
+		if (Distance > MinimumAcceptableDistance)
+		{
+			// Do not allow user to complete objective, unless they are within acceptable range
+			return;
+		}
+		// Track data
 	}
 	
 	/** Last as we want to broadcast after we have finished here */

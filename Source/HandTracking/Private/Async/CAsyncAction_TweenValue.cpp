@@ -14,8 +14,7 @@ UCAsyncAction_TweenValue* UCAsyncAction_TweenValue::Execute(UObject* WorldContex
 	Action->CurrentValue = StartValue;
 	Action->EndingValue = EndValue;
 	Action->TweenSpeed = Speed;
-
-
+	
 	return Action;
 }
 

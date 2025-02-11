@@ -74,7 +74,7 @@ public:
 	bool IsWaitingToStart() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Objective")
-	void CleanUp();
+	virtual void CleanUp();
 
 	UPROPERTY(BlueprintAssignable, Category = "Objective")
 	FOnObjectiveStatusUpdated OnObjectiveStarted;

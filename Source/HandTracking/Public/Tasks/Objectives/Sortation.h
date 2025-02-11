@@ -31,6 +31,8 @@ class HANDTRACKING_API USortation : public UHTTaskObjective
 
 public:
 	virtual void Activate_Implementation(UObject* InWorldContextManual) override;
+
+	virtual void Complete_Implementation() override;
 	
 	int32 ObjectsSortedCorrectly = 0;
 	int32 ObjectsSortedIncorrectly = 0;
