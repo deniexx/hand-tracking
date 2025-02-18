@@ -6,6 +6,7 @@
 #include "UObject/NoExportTypes.h"
 #include "HTTask.generated.h"
 
+class UHTResultWriterSubsystem;
 class UHTTaskObjective;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTaskCompleted, UHTTask*, Task);
@@ -20,6 +21,8 @@ class HANDTRACKING_API UHTTask : public UObject
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintCallable, Category = "HTTask", meta = (DefaultToSelf = "WorldContext"))
+	void StartTask(UObject* WorldContext, FString Configuration);
 
 	UFUNCTION(BlueprintCallable, Category = "Task", meta = (DefaultToSelf = "WorldContext"))
 	void BeginNextObjective(UObject* WorldContext);
@@ -40,6 +43,12 @@ public:
 	FOnTaskObjectiveCompleted OnObjectiveStarted;
 	
 protected:
+
+	UHTResultWriterSubsystem* GetResultWriterSubsystem() const;
+
+	
+	UPROPERTY()
+	UObject* WorldContextManual;
 
 	UPROPERTY(EditAnywhere, Category = "Task")
 	TArray<UHTTaskObjective*> Objectives;

@@ -31,11 +31,14 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Objective")
 	float MinimumAcceptableDistance = 10.f;
+
+	UPROPERTY(EditAnywhere, Category = "Objective")
+	TMap<FGameplayTag, FString> TagsToNames;
 	
 	TArray<TPair<AHTTaskActor*, AHTTaskActor*>> SolutionsToTargets;
 	
 protected:
-
+	
 	UFUNCTION()
 	void OnSolutionActorDropped(AHTTaskActor* TaskActor);
 };

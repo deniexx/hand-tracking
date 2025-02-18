@@ -3,8 +3,16 @@
 
 #include "Tasks/HTTask.h"
 
-#include "EntitySystem/MovieSceneEntityManager.h"
+#include "System/HTResultWriterSubsystem.h"
 #include "Tasks/HTTaskObjective.h"
+
+void UHTTask::StartTask(UObject* WorldContext, FString Configuration)
+{
+	WorldContextManual = WorldContext;
+
+	UHTResultWriterSubsystem* ResultWriterSubsystem = GetResultWriterSubsystem();
+	ResultWriterSubsystem->BeginWritingTest(Configuration);
+}
 
 void UHTTask::BeginNextObjective(UObject* WorldContext)
 {
@@ -50,6 +58,16 @@ void UHTTask::CompleteCurrentObjective()
 	Objectives[CurrentObjective]->Complete();
 }
 
+UHTResultWriterSubsystem* UHTTask::GetResultWriterSubsystem() const
+{
+	if (WorldContextManual)
+	{
+		return WorldContextManual->GetWorld()->GetGameInstance()->GetSubsystem<UHTResultWriterSubsystem>();
+	}
+
+	return nullptr;
+}
+
 void UHTTask::OnObjectiveCompleted(UHTTaskObjective* Objective)
 {
 	/** Clear delegate */
@@ -74,6 +92,7 @@ void UHTTask::OnObjectiveCompleted(UHTTaskObjective* Objective)
 
 	if (NumObjectives == CompletedObjectives)
 	{
+		GetResultWriterSubsystem()->EndWritingTest();
 		OnCompleted.Broadcast(this);
 	}
 }

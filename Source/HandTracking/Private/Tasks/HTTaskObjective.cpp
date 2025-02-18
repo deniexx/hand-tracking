@@ -5,6 +5,7 @@
 
 #include "EngineUtils.h"
 #include "Actor/HTTaskActor.h"
+#include "System/HTResultWriterSubsystem.h"
 
 void UHTTaskObjective::Activate_Implementation(UObject* InWorldContextManual)
 {
@@ -16,6 +17,7 @@ void UHTTaskObjective::Activate_Implementation(UObject* InWorldContextManual)
 	WorldContextManual = InWorldContextManual;
 	TrackedData = FString();
 	State = EObjectiveState::InProgress;
+	GetResultWriterSubsystem()->BeginWriteTestTask(GetFName().ToString());
 	
 	SpawnTaskActors();
 	OnObjectiveStarted.Broadcast(this);
@@ -28,6 +30,8 @@ void UHTTaskObjective::Complete_Implementation()
 		return;
 	}
 
+	SendResultsToSubsystem();
+	GetResultWriterSubsystem()->EndWriteTestTask();
 	State = EObjectiveState::Completed;
 	OnObjectiveCompleted.Broadcast(this);
 }
@@ -165,4 +169,19 @@ int32 UHTTaskObjective::GetUnusedIndex(TArray<int32>& UsedIndices, int32 MaxNumb
 	}
 
 	return GetUnusedIndex(UsedIndices, MaxNumber);
+}
+
+UHTResultWriterSubsystem* UHTTaskObjective::GetResultWriterSubsystem() const
+{
+	if (WorldContextManual)
+	{
+		return WorldContextManual->GetWorld()->GetGameInstance()->GetSubsystem<UHTResultWriterSubsystem>();
+	}
+
+	return nullptr;
+}
+
+void UHTTaskObjective::SendResultsToSubsystem()
+{
+	GetResultWriterSubsystem()->WriteTestResult(TrackedData);
 }

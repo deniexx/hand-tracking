@@ -6,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "HTTaskObjective.generated.h"
 
+class UHTResultWriterSubsystem;
 class AHTTaskActor;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnObjectiveStatusUpdated, UHTTaskObjective*, Objective);
 
@@ -99,6 +100,10 @@ protected:
 	static int32 GetUnusedIndex(TArray<int32>& UsedIndices, int32 MaxNumber);
 
 protected:
+
+	UHTResultWriterSubsystem* GetResultWriterSubsystem() const;
+	
+	virtual void SendResultsToSubsystem();
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objective")
 	FGameplayTagContainer TaskActorTags;

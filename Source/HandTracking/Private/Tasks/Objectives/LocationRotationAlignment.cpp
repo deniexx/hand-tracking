@@ -5,6 +5,7 @@
 
 #include "Actor/HTTaskActor.h"
 #include "HandTracking/HandTracking.h"
+#include "System/HTResultWriterSubsystem.h"
 
 ULocationRotationAlignment::ULocationRotationAlignment()
 {
@@ -59,7 +60,10 @@ void ULocationRotationAlignment::Complete_Implementation()
 			// Do not allow user to complete objective, unless they are within acceptable range
 			return;
 		}
-		// Track data
+
+		const FString* First = TagsToNames.Find(SolutionToTarget.Key->TaskActorTag);
+		const FString Second = FString::Printf(TEXT("%.2f"), Distance);
+		TrackedData += *First + ", " + Second + LINE_TERMINATOR;
 	}
 	
 	/** Last as we want to broadcast after we have finished here */

@@ -55,7 +55,10 @@ void USortation::Complete_Implementation()
 		// Do not allow user to continue, unless all balls have been sorted
 		return;
 	}
-	
+
+	TrackedData.Empty();
+	TrackedData += FString("Correctly Sorted:, ") + FString::FromInt(ObjectsSortedCorrectly) + LINE_TERMINATOR;
+	TrackedData += FString("Incorrectly Sorted:, ") + FString::FromInt(ObjectsSortedIncorrectly) + LINE_TERMINATOR;
 	Super::Complete_Implementation();
 }
 
@@ -118,7 +121,7 @@ void USortation::OnSortableDropped(AHTTaskActor* TaskActor)
 
 	if (IsValid(ClosestTargetActor) && ClosestTarget < SortationAcceptanceRange)
 	{
-		if (ClosestTargetActor->TaskActorTag.MatchesTagExact(ClosestTargetActor->OptionalTag))
+		if (ClosestTargetActor->TaskActorTag.MatchesTagExact(TaskActor->OptionalTag))
 		{
 			++ObjectsSortedCorrectly;
 		}

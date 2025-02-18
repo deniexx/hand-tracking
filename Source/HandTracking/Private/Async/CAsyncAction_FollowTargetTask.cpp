@@ -51,7 +51,10 @@ void UCAsyncAction_FollowTargetTask::Tick(float DeltaTime)
 
 bool UCAsyncAction_FollowTargetTask::IsObjectCloseToEnd() const
 {
-	return (DistanceAlongSpline - SplineComponent->GetSplineLength()) < AcceptableDistanceDelta;
+	UE_LOG(LogTemp, Log, TEXT("Distance along splint: %.2f"), DistanceAlongSpline);
+	UE_LOG(LogTemp, Log, TEXT("Spline Length: %.2f"), SplineComponent->GetSplineLength());
+	UE_LOG(LogTemp, Log, TEXT("Delta: %.2f"), DistanceAlongSpline - SplineComponent->GetSplineLength());
+	return DistanceAlongSpline > (SplineComponent->GetSplineLength() - AcceptableDistanceDelta);
 }
 
 void UCAsyncAction_FollowTargetTask::SetIsTracking(bool bNewValue)
