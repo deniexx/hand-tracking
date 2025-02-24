@@ -49,6 +49,8 @@ void UFollowTarget::Complete_Implementation()
 		return;
 	}
 
+	/** @TODO: Rework */
+	
 	TrackedData.Empty();
 
 	float AveragePositionDelta, TotalPositionDelta, TotalPositionSamples, Duration;

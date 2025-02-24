@@ -8,7 +8,9 @@
 
 class UHTResultWriterSubsystem;
 class AHTTaskActor;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnObjectiveStatusUpdated, UHTTaskObjective*, Objective);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnObjectiveReadyToBeCompleted, bool, bReady);
 
 USTRUCT(BlueprintType)
 struct FObjectiveActor
@@ -82,6 +84,8 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Objective")
 	FOnObjectiveStatusUpdated OnObjectiveCompleted;
+
+	FOnObjectiveReadyToBeCompleted OnObjectiveReadyToBeCompleted;
 	
 	static void SetMaterialColor(const AHTTaskActor* TaskActor, const FVector& MaterialColor);
 

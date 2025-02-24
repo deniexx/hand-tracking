@@ -11,6 +11,7 @@ class UHTTaskObjective;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTaskCompleted, UHTTask*, Task);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnTaskObjectiveCompleted, UHTTaskObjective*, Objective, int32, ObjectiveIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTaskObjectiveReadyToBeCompleted, bool, bReady);
 
 /**
  *
@@ -41,8 +42,14 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Task")
 	FOnTaskObjectiveCompleted OnObjectiveStarted;
+
+	UPROPERTY(BlueprintAssignable, Category = "Task")
+	FOnTaskObjectiveReadyToBeCompleted OnObjectiveReadyToBeCompleted;
 	
 protected:
+
+	UFUNCTION(BlueprintCallable)
+	void OnObjectiveReadyToBeCompletedFunc(bool bReady);
 
 	UHTResultWriterSubsystem* GetResultWriterSubsystem() const;
 

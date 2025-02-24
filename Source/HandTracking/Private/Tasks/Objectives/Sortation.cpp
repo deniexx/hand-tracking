@@ -137,4 +137,7 @@ void USortation::OnSortableDropped(AHTTaskActor* TaskActor)
 		TweenValue->OnTweenUpdate.AddDynamic(this, &ThisClass::ScaleDownActor);
 		TweenValue->OnTweenFinished.AddDynamic(this, &ThisClass::OnTweenFinished);
 	}
+
+	const bool bCanBeCompleted = ObjectsSortedCorrectly + ObjectsSortedIncorrectly == NumberOfSortables;
+	OnObjectiveReadyToBeCompleted.Broadcast(bCanBeCompleted);
 }

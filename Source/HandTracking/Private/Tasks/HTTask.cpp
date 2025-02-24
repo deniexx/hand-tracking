@@ -23,6 +23,7 @@ void UHTTask::BeginNextObjective(UObject* WorldContext)
 
 	Objectives[CurrentObjective]->Activate(WorldContext);
 	Objectives[CurrentObjective]->OnObjectiveCompleted.AddDynamic(this, &ThisClass::OnObjectiveCompleted);
+	Objectives[CurrentObjective]->OnObjectiveReadyToBeCompleted.AddDynamic(this, &ThisClass::OnObjectiveReadyToBeCompletedFunc);
 	OnObjectiveStarted.Broadcast(Objectives[CurrentObjective], CurrentObjective);
 }
 
@@ -58,6 +59,11 @@ void UHTTask::CompleteCurrentObjective()
 	Objectives[CurrentObjective]->Complete();
 }
 
+void UHTTask::OnObjectiveReadyToBeCompletedFunc(bool bReady)
+{
+	OnObjectiveReadyToBeCompleted.Broadcast(bReady);
+}
+
 UHTResultWriterSubsystem* UHTTask::GetResultWriterSubsystem() const
 {
 	if (WorldContextManual)
@@ -72,6 +78,7 @@ void UHTTask::OnObjectiveCompleted(UHTTaskObjective* Objective)
 {
 	/** Clear delegate */
 	Objective->OnObjectiveCompleted.RemoveDynamic(this, &ThisClass::OnObjectiveCompleted);
+	Objective->OnObjectiveReadyToBeCompleted.RemoveDynamic(this, &ThisClass::OnObjectiveReadyToBeCompletedFunc);
 
 	/** Broadcast our own, and increment objective counter */
 	OnTaskObjectiveCompleted.Broadcast(Objective, CurrentObjective);

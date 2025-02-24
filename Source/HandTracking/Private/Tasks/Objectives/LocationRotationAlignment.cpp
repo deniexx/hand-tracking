@@ -72,23 +72,24 @@ void ULocationRotationAlignment::Complete_Implementation()
 
 void ULocationRotationAlignment::OnSolutionActorDropped(AHTTaskActor* TaskActor)
 {
+	int32 NumberOfCloseObjects = 0;
 	for (const auto SolutionToTarget : SolutionsToTargets)
 	{
-		if (TaskActor == SolutionToTarget.Key)
+		const FVector ToTarget = SolutionToTarget.Key->GetActorLocation() - SolutionToTarget.Value->GetActorLocation();
+		const float Distance = ToTarget.Length();
+		
+		if (Distance > MinimumAcceptableDistance)
 		{
-			const FVector ToTarget = SolutionToTarget.Key->GetActorLocation() - SolutionToTarget.Value->GetActorLocation();
-			const float Distance = ToTarget.Length();
-			
-			if (Distance > MinimumAcceptableDistance)
-			{
-				// Yellow-y orange
-				SetMaterialColor(TaskActor, FVector(0.244792f, 0.223655f, 0.000000f));
-				return;
-			}
-
-			// Green
-			SetMaterialColor(TaskActor, FVector(0.000000f, 0.244792f, 0.000000f));
-			UE_LOG(LogHandTracking, Log, TEXT("SolutionActorDropped kinda close to the TargetActor"));
+			// Yellow-y orange
+			SetMaterialColor(TaskActor, FVector(0.244792f, 0.223655f, 0.000000f));
+			continue;
 		}
+
+		// Green
+		SetMaterialColor(TaskActor, FVector(0.000000f, 0.244792f, 0.000000f));
+		++NumberOfCloseObjects;
 	}
+
+	const bool bCanBeCompleted = NumberOfCloseObjects == SolutionsToTargets.Num();
+	OnObjectiveReadyToBeCompleted.Broadcast(bCanBeCompleted);
 }

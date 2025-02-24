@@ -42,7 +42,7 @@ void UCubeStacking::Activate_Implementation(UObject* InWorldContextManual)
 
 void UCubeStacking::Complete_Implementation()
 {
-	if (CubesStackedCorrectly + CubesStackedIncorrectly < SpawnedActors.Num() - 1)
+	if (CubesStackedCorrectly + CubesStackedIncorrectly < SpawnedActors.Num())
 	{
 		return;
 	}
@@ -50,8 +50,12 @@ void UCubeStacking::Complete_Implementation()
 	UE_LOG(LogHandTracking, Display, TEXT("UCubeStacking::Complete_Implementation"));
 	
 	TrackedData.Empty();
-	TrackedData = FString("CubesStackedCorrectly:,") + FString::FromInt(CubesStackedCorrectly) + LINE_TERMINATOR;
-	TrackedData += FString("CubesStackedIncorrectly:,") + FString::FromInt(CubesStackedIncorrectly) + LINE_TERMINATOR;
+
+	TrackedData = FString::Printf(TEXT("SnapToGround: %s"), bSnapToGround ? TEXT("true") : TEXT("false")) + LINE_TERMINATOR;
+	TrackedData += FString::Printf(TEXT("CubePhysics: %s"), bEnablesPhysicsOnCubes ? TEXT("true") : TEXT("false")) + LINE_TERMINATOR;
+	TrackedData += FString::Printf(TEXT("HandPhysics: %s"), bEnablesPhysicsOnHands ? TEXT("true") : TEXT("false")) + LINE_TERMINATOR;
+	TrackedData += FString::Printf(TEXT("CubesStackedCorrectly:,%d"), CubesStackedCorrectly) + LINE_TERMINATOR;
+	TrackedData += FString::Printf(TEXT("CubesStackedIncorrectly:,%d"), CubesStackedIncorrectly) + LINE_TERMINATOR;
 	
 	Super::Complete_Implementation();
 }
@@ -117,4 +121,7 @@ void UCubeStacking::OnObjectiveActorDropped(AHTTaskActor* TaskActor)
 			}
 		}
 	}
+
+	const bool bCanBeCompleted = CubesStackedCorrectly + CubesStackedIncorrectly == SpawnedActors.Num();
+	OnObjectiveReadyToBeCompleted.Broadcast(bCanBeCompleted);
 }
