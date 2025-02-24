@@ -63,7 +63,7 @@ void ULocationRotationAlignment::Complete_Implementation()
 
 		const FString* First = TagsToNames.Find(SolutionToTarget.Key->TaskActorTag);
 		const FString Second = FString::Printf(TEXT("%.2f"), Distance);
-		TrackedData += *First + ", " + Second + LINE_TERMINATOR;
+		TrackedData += *First + "," + Second + LINE_TERMINATOR;
 	}
 	
 	/** Last as we want to broadcast after we have finished here */

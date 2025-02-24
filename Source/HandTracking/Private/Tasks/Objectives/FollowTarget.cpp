@@ -53,8 +53,8 @@ void UFollowTarget::Complete_Implementation()
 
 	float AveragePositionDelta, TotalPositionDelta, TotalPositionSamples, Duration;
 	FollowTargetTask->GetTrackedData(AveragePositionDelta, TotalPositionDelta, TotalPositionSamples, Duration);
-	TrackedData += FString("Average Position Delta:, ") + FString::Printf(TEXT("%.2f"), AveragePositionDelta) + LINE_TERMINATOR;
-	TrackedData += FString("Time Taken:, ") + FString::Printf(TEXT("%.2f"), Duration) + LINE_TERMINATOR;
+	TrackedData += FString("Average Position Delta:,") + FString::Printf(TEXT("%.2f"), AveragePositionDelta) + LINE_TERMINATOR;
+	TrackedData += FString("Time Taken:,") + FString::Printf(TEXT("%.2f"), Duration) + LINE_TERMINATOR;
 	Super::Complete_Implementation();
 }
 

@@ -57,8 +57,8 @@ void USortation::Complete_Implementation()
 	}
 
 	TrackedData.Empty();
-	TrackedData += FString("Correctly Sorted:, ") + FString::FromInt(ObjectsSortedCorrectly) + LINE_TERMINATOR;
-	TrackedData += FString("Incorrectly Sorted:, ") + FString::FromInt(ObjectsSortedIncorrectly) + LINE_TERMINATOR;
+	TrackedData += FString("Correctly Sorted:,") + FString::FromInt(ObjectsSortedCorrectly) + LINE_TERMINATOR;
+	TrackedData += FString("Incorrectly Sorted:,") + FString::FromInt(ObjectsSortedIncorrectly) + LINE_TERMINATOR;
 	Super::Complete_Implementation();
 }
 
