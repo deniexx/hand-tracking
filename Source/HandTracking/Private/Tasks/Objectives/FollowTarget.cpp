@@ -13,59 +13,81 @@ void UFollowTarget::Activate_Implementation(UObject* InWorldContextManual)
 
 	TArray<AHTTaskActor*> Actors = GatherTaskActors();
 
-	AHTTaskActor* SolutionObject = nullptr;
-	AHTTaskActor* TargetObject = nullptr;
-	USplineComponent* SplineComponent = nullptr;
+	SolutionObject = nullptr;
+	SplineComponent = nullptr;
 	
 	for (auto Actor : Actors)
 	{
 		if (SolutionObjectTag.MatchesTagExact(Actor->TaskActorTag))
 		{
 			SolutionObject = Actor;
-			SolutionObject->OnGrabbed.AddDynamic(this, &ThisClass::BeginTracking);
-			SolutionObject->OnDropped.AddDynamic(this, &ThisClass::StopTracking);
-		}
-		else if (TargetTag.MatchesTagExact(Actor->TaskActorTag))
-		{
-			TargetObject = Actor;
+			SolutionObject->OnGrabbed.AddDynamic(this, &ThisClass::OnSolutionObjectGrabbbed);
+			SolutionObject->OnDropped.AddDynamic(this, &ThisClass::OnSolutionObjectDropped);
+
+			if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(SolutionObject->GetRootComponent()))
+			{
+				PrimitiveComponent->OnComponentHit.AddDynamic(this, &ThisClass::OnSolutionObjectHit);
+			}
 		}
 		else if (SplineActorTag.MatchesTagExact(Actor->TaskActorTag))
 		{
+			SplineActor = Actor;
 			SplineComponent = Actor->GetComponentByClass<USplineComponent>();
 		}
 	}
 
-	TargetObject->SetActorLocation(SplineComponent->GetWorldLocationAtDistanceAlongSpline(0.f));
+	FollowTargetTask = UCAsyncAction_FollowTargetTask::Execute(SolutionObject, SplineComponent,
+		AcceptableDistanceDelta, GoodColor, BadColor);
 	
-	FollowTargetTask = UCAsyncAction_FollowTargetTask::Execute(TargetObject, SolutionObject, SplineComponent,
-		MovementSpeed, AcceptableDistanceDelta);
+	FollowTargetTask->OnLocationCloseToEnd.AddDynamic(this, &ThisClass::OnLocationCloseToEnd);
 }
 
 void UFollowTarget::Complete_Implementation()
 {
-	if (!FollowTargetTask->IsObjectCloseToEnd())
+	const FVector EndSplineLocation = SplineComponent->GetLocationAtSplinePoint(SplineComponent->GetNumberOfSplinePoints(), ESplineCoordinateSpace::World);
+	const float Distance = FVector::Dist2D(EndSplineLocation, SolutionObject->GetActorLocation());
+
+	if (Distance > AcceptableDistanceDelta)
 	{
-		// Force user to get to close to the end before completing objective
 		return;
 	}
-
-	/** @TODO: Rework */
 	
 	TrackedData.Empty();
 
-	float AveragePositionDelta, TotalPositionDelta, TotalPositionSamples, Duration;
-	FollowTargetTask->GetTrackedData(AveragePositionDelta, TotalPositionDelta, TotalPositionSamples, Duration);
-	TrackedData += FString("Average Position Delta:,") + FString::Printf(TEXT("%.2f"), AveragePositionDelta) + LINE_TERMINATOR;
-	TrackedData += FString("Time Taken:,") + FString::Printf(TEXT("%.2f"), Duration) + LINE_TERMINATOR;
+	const float TimeTaken = WorldContextManual->GetWorld()->GetTimeSeconds() - TimeStarted;
+	float AveragePositionDelta, TotalPositionSamples, TotalPositionDelta, MaxDistanceDelta;
+	FollowTargetTask->GetTrackedData(AveragePositionDelta, TotalPositionDelta, TotalPositionSamples, MaxDistanceDelta);
+	
+	TrackedData += FString::Printf(TEXT("Time taken to complete: %.2f"), TimeTaken) + LINE_TERMINATOR;
+	TrackedData += FString::Printf(TEXT("Number of Collisions: %d"), NumberOfHits)+ LINE_TERMINATOR;
+	TrackedData += FString::Printf(TEXT("AveragePositionDelta, %.2f"), AveragePositionDelta) + LINE_TERMINATOR;
+	TrackedData += FString::Printf(TEXT("MaxDistanceDelta, %.2f"), MaxDistanceDelta) + LINE_TERMINATOR;
+	TrackedData += FString::Printf(TEXT("TotalPositionSamples, %.0f"), TotalPositionSamples) + LINE_TERMINATOR;
+	TrackedData += FString::Printf(TEXT("TotalPositionDelta, %.2f"), TotalPositionDelta) + LINE_TERMINATOR;
+	
 	Super::Complete_Implementation();
 }
 
-void UFollowTarget::BeginTracking(AHTTaskActor* TaskActor)
+void UFollowTarget::OnSolutionObjectHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
+	if (OtherActor == SplineActor)
+	{
+		++NumberOfHits;
+	}
+}
+
+void UFollowTarget::OnSolutionObjectGrabbbed(AHTTaskActor* TaskActor)
 {
 	FollowTargetTask->SetIsTracking(true);
 }
 
-void UFollowTarget::StopTracking(AHTTaskActor* TaskActor)
+void UFollowTarget::OnSolutionObjectDropped(AHTTaskActor* TaskActor)
 {
 	FollowTargetTask->SetIsTracking(false);
+}
+
+void UFollowTarget::OnLocationCloseToEnd()
+{
+	OnObjectiveReadyToBeCompleted.Broadcast(true);
 }

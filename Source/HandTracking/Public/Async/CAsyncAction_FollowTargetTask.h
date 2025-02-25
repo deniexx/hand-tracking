@@ -6,7 +6,9 @@
 #include "Async/CTickableAsyncAction.h"
 #include "CAsyncAction_FollowTargetTask.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLocationCloseToEnd);
 class USplineComponent;
+
 /**
  * 
  */
@@ -17,31 +19,36 @@ class HANDTRACKING_API UCAsyncAction_FollowTargetTask : public UCTickableAsyncAc
 
 public:
 	
-	static UCAsyncAction_FollowTargetTask* Execute(AActor* TargetActor, AActor* SolutionActor,
-		USplineComponent* SplineComponent, float MovementSpeed, float AcceptableDistanceDelta);
+	static UCAsyncAction_FollowTargetTask* Execute(AActor* SolutionActor, USplineComponent* SplineComponent,
+		float AcceptableDistanceDelta, const FLinearColor& GoodColor, const FLinearColor& BadColor);
 
 	virtual void Tick(float DeltaTime) override;
 
 	bool IsObjectCloseToEnd() const;
 	void SetIsTracking(bool bNewValue);
-	void GetTrackedData(float& OutAveragePositionDelta, float& OutTotalPositionDelta, float& OutTotalPositionSamples, float& OutDuration);
-	
+	void GetTrackedData(float& OutAveragePositionDelta, float& OutTotalPositionDelta, float& OutTotalPositionSamples,
+		float& OutMaxDistanceDelta) const;
+
+	FOnLocationCloseToEnd OnLocationCloseToEnd;
+
 private:
 	
 	bool bTracking = false;
 
-	float Speed = 0.f;
 	float TotalPositionDelta = 0.f;
 	float TotalPositionSamples = 0.f;
-	float TimeTracked = 0.f;
-	float TimeStartedTracking = 0.f;
 	float AcceptableDistanceDelta = 0.f;
-	
-	float DistanceAlongSpline = 0.f;
+	float MaxDistanceDelta = 0.f;
+
+	FLinearColor GoodColor;
+	FLinearColor BadColor;
+
+	UPROPERTY()
+	UMaterialInstanceDynamic* DynamicMaterial;
 	
 	UPROPERTY()
-	AActor* TargetActor;
-
+	UPrimitiveComponent* PrimitiveComponent;
+	
 	UPROPERTY()
 	AActor* SolutionActor;
 

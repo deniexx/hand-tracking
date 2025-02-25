@@ -4,18 +4,22 @@
 #include "Async/CAsyncAction_FollowTargetTask.h"
 
 #include "SplineComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
-UCAsyncAction_FollowTargetTask* UCAsyncAction_FollowTargetTask::Execute(AActor* TargetActor, AActor* SolutionActor,
-	USplineComponent* SplineComponent, float MovementSpeed, float AcceptableDistanceDelta)
+UCAsyncAction_FollowTargetTask* UCAsyncAction_FollowTargetTask::Execute(AActor* SolutionActor,
+	USplineComponent* SplineComponent, float AcceptableDistanceDelta, const FLinearColor& GoodColor, const FLinearColor& BadColor)
 {
-	UCAsyncAction_FollowTargetTask* Action = NewObject<UCAsyncAction_FollowTargetTask>(TargetActor);
-	Action->RegisterWithGameInstance(TargetActor);
+	UCAsyncAction_FollowTargetTask* Action = NewObject<UCAsyncAction_FollowTargetTask>(SolutionActor);
+	Action->RegisterWithGameInstance(SolutionActor);
 	
-	Action->TargetActor = TargetActor;
 	Action->SolutionActor = SolutionActor;
 	Action->SplineComponent = SplineComponent;
-	Action->Speed = MovementSpeed;
 	Action->AcceptableDistanceDelta = AcceptableDistanceDelta;
+	Action->GoodColor = GoodColor;
+	Action->BadColor = BadColor;
+	Action->PrimitiveComponent = Cast<UPrimitiveComponent>(SolutionActor->GetRootComponent());
+	Action->DynamicMaterial = Action->PrimitiveComponent->CreateDynamicMaterialInstance(0);
+	Action->PrimitiveComponent->SetMaterial(0, Action->DynamicMaterial);
 	Action->Activate();
 	
 	return Action;
@@ -30,51 +34,57 @@ void UCAsyncAction_FollowTargetTask::Tick(float DeltaTime)
 		return;
 	}
 
-	if (!IsValid(TargetActor) || !IsValid(SolutionActor) || !bTracking)
+	if (!IsValid(SolutionActor) || !bTracking)
 	{
 		return;
 	}
 	
 	const FVector CurrentLocation = SolutionActor->GetActorLocation();
-	const FVector TargetLocation = TargetActor->GetActorLocation();
+	const FVector TargetLocation = SplineComponent->FindLocationClosestToWorldLocation(CurrentLocation, ESplineCoordinateSpace::World);
 	const float Distance = FVector::Dist(CurrentLocation, TargetLocation);
 	TotalPositionDelta += Distance;
 	++TotalPositionSamples;
 
-	if (Distance < AcceptableDistanceDelta)
+	MaxDistanceDelta = FMath::Max(Distance, MaxDistanceDelta);
+
+	const float Alpha = FMath::Clamp(Distance / AcceptableDistanceDelta, 0.f, 1.f);
+	const FLinearColor FinalColor = UKismetMathLibrary::LinearColorLerp(GoodColor, BadColor, Alpha);
+	DynamicMaterial->SetVectorParameterValue("HologramColor", FinalColor);
+	
+	const float Distance2D = FVector::Dist2D(CurrentLocation, TargetLocation);
+	if (Distance2D < AcceptableDistanceDelta)
 	{
-		DistanceAlongSpline += Speed * DeltaTime;
-		const FVector NewLocation = SplineComponent->GetLocationAtDistanceAlongSpline(DistanceAlongSpline, ESplineCoordinateSpace::World);
-		TargetActor->SetActorLocation(NewLocation);
+		OnLocationCloseToEnd.Broadcast();
 	}
+
+	/** This does not work as we can not set a tick group that will be post parent location setting
+	if (Distance > MaxDistanceDelta)
+	{
+		const FVector ToObject = (TargetLocation - CurrentLocation).GetSafeNormal();
+		SolutionActor->SetActorLocation(TargetLocation + (ToObject * AcceptableDistanceDelta));
+	}
+	*/
 }
 
 bool UCAsyncAction_FollowTargetTask::IsObjectCloseToEnd() const
 {
-	UE_LOG(LogTemp, Log, TEXT("Distance along splint: %.2f"), DistanceAlongSpline);
-	UE_LOG(LogTemp, Log, TEXT("Spline Length: %.2f"), SplineComponent->GetSplineLength());
-	UE_LOG(LogTemp, Log, TEXT("Delta: %.2f"), DistanceAlongSpline - SplineComponent->GetSplineLength());
-	return DistanceAlongSpline > (SplineComponent->GetSplineLength() - AcceptableDistanceDelta);
+	const FVector CurrentLocation = SolutionActor->GetActorLocation();
+	const FVector TargetLocation = SplineComponent->GetLocationAtSplinePoint(SplineComponent->GetNumberOfSplinePoints(),
+		ESplineCoordinateSpace::World);
+
+	return FVector::Dist2D(CurrentLocation, TargetLocation) < AcceptableDistanceDelta;
 }
 
 void UCAsyncAction_FollowTargetTask::SetIsTracking(bool bNewValue)
 {
 	bTracking = bNewValue;
-	if (bTracking)
-	{
-		TimeStartedTracking = TargetActor->GetWorld()->GetTimeSeconds();
-	}
-	else
-	{
-		TimeTracked += TargetActor->GetWorld()->GetTimeSeconds() - TimeStartedTracking;
-	}
 }
 
 void UCAsyncAction_FollowTargetTask::GetTrackedData(float& OutAveragePositionDelta, float& OutTotalPositionDelta,
-	float& OutTotalPositionSamples, float& OutDuration)
+	float& OutTotalPositionSamples, float& OutMaxDistanceDelta) const
 {
 	OutAveragePositionDelta = TotalPositionDelta / TotalPositionSamples;
 	OutTotalPositionDelta = TotalPositionDelta;
 	OutTotalPositionSamples = TotalPositionSamples;
-	OutDuration = TimeTracked;
+	OutMaxDistanceDelta = MaxDistanceDelta;
 }

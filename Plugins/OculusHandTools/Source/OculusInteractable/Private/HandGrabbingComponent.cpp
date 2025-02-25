@@ -67,7 +67,7 @@ AInteractable* UHandGrabbingComponent::TryGrab(FTransform GrabTransform)
 	return GrabbedActor;
 }
 
-AInteractable* UHandGrabbingComponent::TryRelease(bool bReenablePhysics)
+AInteractable* UHandGrabbingComponent::TryRelease(bool bReenablePhysics /** Unused Parameter */)
 {
 	auto const ReleasedActor = GrabbedActor;
 	if (GrabbedActor != nullptr)
@@ -80,7 +80,7 @@ AInteractable* UHandGrabbingComponent::TryRelease(bool bReenablePhysics)
 			InteractableRoot->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
 
 			auto GrabbedPrimitive = Cast<UPrimitiveComponent>(InteractableRoot);
-			if (bReenablePhysics && bGrabbedActorHasPhysics && GrabbedPrimitive != nullptr)
+			if (bGrabbedActorHasPhysics && GrabbedPrimitive != nullptr)
 			{
 				GrabbedPrimitive->SetSimulatePhysics(true);
 			}

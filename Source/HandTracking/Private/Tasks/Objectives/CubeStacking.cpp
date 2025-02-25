@@ -46,8 +46,6 @@ void UCubeStacking::Complete_Implementation()
 	{
 		return;
 	}
-
-	UE_LOG(LogHandTracking, Display, TEXT("UCubeStacking::Complete_Implementation"));
 	
 	TrackedData.Empty();
 
@@ -56,6 +54,22 @@ void UCubeStacking::Complete_Implementation()
 	TrackedData += FString::Printf(TEXT("HandPhysics: %s"), bEnablesPhysicsOnHands ? TEXT("true") : TEXT("false")) + LINE_TERMINATOR;
 	TrackedData += FString::Printf(TEXT("CubesStackedCorrectly:,%d"), CubesStackedCorrectly) + LINE_TERMINATOR;
 	TrackedData += FString::Printf(TEXT("CubesStackedIncorrectly:,%d"), CubesStackedIncorrectly) + LINE_TERMINATOR;
+
+	if (bEnablesPhysicsOnHands)
+	{
+		APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(WorldContextManual, 0);
+		if (PlayerPawn != nullptr)
+		{
+			TArray<UPoseableMeshComponent*> PoseableMeshComponents;
+			PlayerPawn->GetComponents<UPoseableMeshComponent>(PoseableMeshComponents);
+
+			for (auto PoseableMeshComponent : PoseableMeshComponents)
+			{
+				PoseableMeshComponent->SetCollisionProfileName("NoCollision");
+				PoseableMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			}
+		}
+	}
 	
 	Super::Complete_Implementation();
 }
@@ -64,6 +78,10 @@ void UCubeStacking::OnObjectiveActorDropped(AHTTaskActor* TaskActor)
 {
 	const UWorld* World = WorldContextManual->GetWorld();
 
+	FVector Origin, BoxExtent;
+	TaskActor->GetActorBounds(false, Origin, BoxExtent);
+	FCollisionShape BoxShape = FCollisionShape::MakeBox(BoxExtent / 2.f);
+	
 	if (bSnapToGround)
 	{
 		FHitResult Hit;
@@ -71,13 +89,10 @@ void UCubeStacking::OnObjectiveActorDropped(AHTTaskActor* TaskActor)
 		const FVector End = Start - (FVector::UpVector * 10.f);
 		FCollisionQueryParams Params;
 		Params.AddIgnoredActor(TaskActor);
-		if (World->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, Params))
+		if (World->SweepSingleByChannel(Hit, Start, End, FQuat::Identity, ECC_Visibility, BoxShape, Params))
 		{
 			if (AHTTaskActor* HitActor = Cast<AHTTaskActor>(Hit.GetActor()))
 			{
-				FVector Origin, BoxExtent;
-				TaskActor->GetActorBounds(false, Origin, BoxExtent);
-				
 				FVector TargetLocation = Hit.ImpactPoint;
 				TargetLocation.Z += BoxExtent.Z;
 				TaskActor->SetActorLocation(TargetLocation);
@@ -102,7 +117,7 @@ void UCubeStacking::OnObjectiveActorDropped(AHTTaskActor* TaskActor)
 		FCollisionQueryParams Params;
 		Params.AddIgnoredActor(Actor);
 		FHitResult Hit;
-		if (World->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, Params))
+		if (World->SweepSingleByChannel(Hit, Start, End, FQuat::Identity, ECC_Visibility, BoxShape, Params))
 		{
 			AHTTaskActor* HitActor = Cast<AHTTaskActor>(Hit.GetActor());
 			if (HitActor)
