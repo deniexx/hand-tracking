@@ -37,4 +37,5 @@ private:
 	
 	int32 CubesStackedCorrectly = 0;
 	int32 CubesStackedIncorrectly = 0;
+	float AverageXYDelta = 0.f;
 };

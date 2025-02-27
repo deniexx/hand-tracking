@@ -26,6 +26,8 @@ public:
 	
 private:
 
+	FString Config;
+
 	UPROPERTY()
 	TArray<FString> DataToWriteToCSV;
 };

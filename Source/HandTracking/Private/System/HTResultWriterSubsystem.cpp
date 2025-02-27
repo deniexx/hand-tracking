@@ -9,6 +9,7 @@ void UHTResultWriterSubsystem::BeginWritingTest(const FString& Configuration)
 {
 	DataToWriteToCSV.Empty();
 
+	Config = Configuration;
 	DataToWriteToCSV.Add(Configuration + '\n');
 }
 
@@ -39,8 +40,14 @@ void UHTResultWriterSubsystem::EndWritingTest()
 
 	TArray<FString> Results;
 	PlatformFile.FindFiles(Results, *Path, TEXT(".csv"));
+	int32 ParticipantNumber = 0;
 	
-	const FString FileName = FString("Participant") + FString::FromInt(Results.Num()) + FString(".csv");
+	if (Results.Num() > 0)
+	{
+		ParticipantNumber = FMath::Floor((float)(Results.Num()) / 3.f);
+	}
+	
+	const FString FileName = FString::Printf(TEXT("Participant%d_%s.csv"), ParticipantNumber, *Config);
 	const FString FullPath = FPaths::Combine(Path, FileName);
 
 	UE_LOG(LogHandTracking, Warning, TEXT("DataToWriteToCSV Num: %d"), DataToWriteToCSV.Num());

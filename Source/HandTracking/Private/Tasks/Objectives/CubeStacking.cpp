@@ -4,6 +4,7 @@
 #include "Tasks/Objectives/CubeStacking.h"
 
 #include "PoseableMeshComponent.h"
+#include "SphereComponent.h"
 #include "Actor/HTTaskActor.h"
 #include "HandTracking/HandTracking.h"
 #include "Kismet/GameplayStatics.h"
@@ -36,6 +37,18 @@ void UCubeStacking::Activate_Implementation(UObject* InWorldContextManual)
 				PoseableMeshComponent->SetCollisionProfileName("PhysicsActor");
 				PoseableMeshComponent->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 			}
+
+			TArray<USphereComponent*> SphereComponents;
+			PlayerPawn->GetComponents<USphereComponent>(SphereComponents);
+
+			for (auto SphereComponent : SphereComponents)
+			{
+				if (SphereComponent->GetFName().ToString().Contains("Fist"))
+				{
+					SphereComponent->SetCollisionProfileName("BlockAll");
+					SphereComponent->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+				}
+			}
 		}
 	}
 }
@@ -54,6 +67,7 @@ void UCubeStacking::Complete_Implementation()
 	TrackedData += FString::Printf(TEXT("HandPhysics: %s"), bEnablesPhysicsOnHands ? TEXT("true") : TEXT("false")) + LINE_TERMINATOR;
 	TrackedData += FString::Printf(TEXT("CubesStackedCorrectly:,%d"), CubesStackedCorrectly) + LINE_TERMINATOR;
 	TrackedData += FString::Printf(TEXT("CubesStackedIncorrectly:,%d"), CubesStackedIncorrectly) + LINE_TERMINATOR;
+	TrackedData += FString::Printf(TEXT("AverageXYDelta:,%.2f"), AverageXYDelta) + LINE_TERMINATOR;
 
 	if (bEnablesPhysicsOnHands)
 	{
@@ -67,6 +81,18 @@ void UCubeStacking::Complete_Implementation()
 			{
 				PoseableMeshComponent->SetCollisionProfileName("NoCollision");
 				PoseableMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			}
+
+			TArray<USphereComponent*> SphereComponents;
+			PlayerPawn->GetComponents<USphereComponent>(SphereComponents);
+
+			for (auto SphereComponent : SphereComponents)
+			{
+				if (SphereComponent->GetFName().ToString().Contains("Fist"))
+				{
+					SphereComponent->SetCollisionProfileName("NoCollision");
+					SphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+				}
 			}
 		}
 	}
@@ -93,7 +119,8 @@ void UCubeStacking::OnObjectiveActorDropped(AHTTaskActor* TaskActor)
 		{
 			if (AHTTaskActor* HitActor = Cast<AHTTaskActor>(Hit.GetActor()))
 			{
-				FVector TargetLocation = Hit.ImpactPoint;
+				FVector TargetLocation = Start;
+				TargetLocation.Z = Hit.ImpactPoint.Z;
 				TargetLocation.Z += BoxExtent.Z;
 				TaskActor->SetActorLocation(TargetLocation);
 			}
@@ -102,6 +129,8 @@ void UCubeStacking::OnObjectiveActorDropped(AHTTaskActor* TaskActor)
 	
 	TArray<AHTTaskActor*> Actors = GatherTaskActors();
 
+	int32 Samples = 0;
+	float TotalDelta = 0.f;
 	CubesStackedCorrectly = 0;
 	CubesStackedIncorrectly = 0;
 	for (AHTTaskActor* Actor : Actors)
@@ -133,10 +162,14 @@ void UCubeStacking::OnObjectiveActorDropped(AHTTaskActor* TaskActor)
 				{
 					++CubesStackedIncorrectly;
 				}
+
+				++Samples;
+				TotalDelta += FVector::Dist2D(Actor->GetActorLocation(), HitActor->GetActorLocation());; 
 			}
 		}
 	}
 
+	AverageXYDelta = TotalDelta / Samples;
 	const bool bCanBeCompleted = CubesStackedCorrectly + CubesStackedIncorrectly == SpawnedActors.Num();
 	OnObjectiveReadyToBeCompleted.Broadcast(bCanBeCompleted);
 }

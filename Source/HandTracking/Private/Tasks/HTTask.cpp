@@ -9,7 +9,7 @@
 void UHTTask::StartTask(UObject* WorldContext, FString Configuration)
 {
 	WorldContextManual = WorldContext;
-
+	
 	UHTResultWriterSubsystem* ResultWriterSubsystem = GetResultWriterSubsystem();
 	ResultWriterSubsystem->BeginWritingTest(Configuration);
 }
