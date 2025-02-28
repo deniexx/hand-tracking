@@ -97,9 +97,12 @@ void UHTFeedbackSubsystem::SendFeedback(USerialCom* Com, const FHandFeedbackConf
 
 	const uint8 Location = (uint8)Config.Location;
 	const uint8 Strength = (uint8)(255.f * ClampedStrength);
+	const uint8 Padding1 = 0;
+	const uint8 Padding2 = 0;
+	
 	TArray<uint8> RawData = { Location, Strength };
 	RawData.Append(USerialCom::FloatToBytes(Config.Duration));
-
+	RawData.Append({ Padding1, Padding2 });
 	const FString HandString = Config.Hand == ETargetHand::Left ? "Left" : "Right";
 	if (!Com->WriteBytes(RawData))
 	{
