@@ -6,7 +6,6 @@
 #include "PoseableMeshComponent.h"
 #include "SphereComponent.h"
 #include "Actor/HTTaskActor.h"
-#include "HandTracking/HandTracking.h"
 #include "Kismet/GameplayStatics.h"
 
 void UCubeStacking::Activate_Implementation(UObject* InWorldContextManual)

@@ -33,10 +33,10 @@ public:
 	bool bGrabbedActorHasPhysics = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grabbing")
-	float GrabCapsuleHeight = 30.f;
+	float GrabCapsuleHeight = 3.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grabbing")
-	float GrabCapsuleRadius = 20.f;
+	float GrabCapsuleRadius = 3.f;
 
 private:
 	UFUNCTION()

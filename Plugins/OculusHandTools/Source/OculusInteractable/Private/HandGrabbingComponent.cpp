@@ -9,7 +9,9 @@ AInteractable* UHandGrabbingComponent::TryGrab(FTransform GrabTransform)
 	auto HitResults = TArray<FOverlapResult>{};
 	auto QueryParams = FCollisionQueryParams::DefaultQueryParam;
 	auto ResponseParams = FCollisionResponseParams(ECR_Overlap);
-
+	GrabCapsuleHeight = 3.f;
+	GrabCapsuleRadius = 3.f;
+	
 	GetWorld()->OverlapMultiByChannel(HitResults, GrabTransform.GetLocation(), GrabTransform.GetRotation(), ECC_WorldDynamic, FCollisionShape::MakeCapsule(GrabCapsuleRadius, GrabCapsuleHeight / 2.f), FCollisionQueryParams::DefaultQueryParam, ResponseParams);
 
 	if (HitResults.Num() > 0)
