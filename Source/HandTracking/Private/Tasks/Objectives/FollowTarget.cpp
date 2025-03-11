@@ -89,5 +89,8 @@ void UFollowTarget::OnSolutionObjectDropped(AHTTaskActor* TaskActor)
 
 void UFollowTarget::OnLocationCloseToEnd()
 {
+	SolutionObject->Interaction3();
+	SolutionObject->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	SolutionObject->SetCanBeGrabbed(false);
 	OnObjectiveReadyToBeCompleted.Broadcast(true);
 }

@@ -17,7 +17,16 @@ UCAsyncAction_FollowTargetTask* UCAsyncAction_FollowTargetTask::Execute(AActor* 
 	Action->AcceptableDistanceDelta = AcceptableDistanceDelta;
 	Action->GoodColor = GoodColor;
 	Action->BadColor = BadColor;
-	Action->PrimitiveComponent = Cast<UPrimitiveComponent>(SolutionActor->GetRootComponent());
+
+	TArray<UPrimitiveComponent*> Primitives;
+	SolutionActor->GetComponents<UPrimitiveComponent>(Primitives);
+	for (auto Primitive : Primitives)
+	{
+		if (Primitive->GetFName().ToString().Contains("Sphere"))
+		{
+			Action->PrimitiveComponent = Primitive;
+		}
+	}
 	Action->DynamicMaterial = Action->PrimitiveComponent->CreateDynamicMaterialInstance(0);
 	Action->PrimitiveComponent->SetMaterial(0, Action->DynamicMaterial);
 	Action->Activate();
@@ -38,8 +47,8 @@ void UCAsyncAction_FollowTargetTask::Tick(float DeltaTime)
 	{
 		return;
 	}
-	
-	const FVector CurrentLocation = SolutionActor->GetActorLocation();
+
+	const FVector CurrentLocation = PrimitiveComponent->GetComponentLocation();
 	const FVector TargetLocation = SplineComponent->FindLocationClosestToWorldLocation(CurrentLocation, ESplineCoordinateSpace::World);
 	const float Distance = FVector::Dist(CurrentLocation, TargetLocation);
 	TotalPositionDelta += Distance;
@@ -50,10 +59,14 @@ void UCAsyncAction_FollowTargetTask::Tick(float DeltaTime)
 	const float Alpha = FMath::Clamp(Distance / AcceptableDistanceDelta, 0.f, 1.f);
 	const FLinearColor FinalColor = UKismetMathLibrary::LinearColorLerp(GoodColor, BadColor, Alpha);
 	DynamicMaterial->SetVectorParameterValue("HologramColor", FinalColor);
+
+	const FVector FinalLocation = SplineComponent->GetLocationAtSplinePoint(
+		SplineComponent->GetNumberOfSplinePoints() - 1, ESplineCoordinateSpace::World);
 	
-	const float Distance2D = FVector::Dist2D(CurrentLocation, TargetLocation);
+	const float Distance2D = FVector::Dist(CurrentLocation, FinalLocation);
 	if (Distance2D < AcceptableDistanceDelta)
 	{
+		DynamicMaterial->SetVectorParameterValue("HologramColor", FColor::Green);
 		OnLocationCloseToEnd.Broadcast();
 	}
 
