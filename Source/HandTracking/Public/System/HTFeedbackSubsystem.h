@@ -9,6 +9,7 @@
 
 class USerialCom;
 
+
 /**
  * 
  */
@@ -30,11 +31,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "HTFeedbackSubsystem")
 	void ApplyFeedback(const FHandFeedbackConfig& Config);
 
+	UFUNCTION(BlueprintCallable, Category = "HTFeedbackSubsystem")
+	void ToggleHandHaptics(bool bEnabled);
+
 private:
 
 	void SendFeedback(USerialCom* Com, const FHandFeedbackConfig& Config) const;
 	
 private:
+
+	bool bHapticsEnabled = false;
 	
 	UPROPERTY()
 	TMap<ETargetHandLocation, double> FingerToTimeToSendRight;

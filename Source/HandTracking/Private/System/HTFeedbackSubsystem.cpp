@@ -12,7 +12,7 @@ void UHTFeedbackSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	Super::Initialize(Collection);
 
 	bool bSuccess = false; 
-	RightHandSerialCom = USerialCom::OpenComPort(bSuccess, 3, 9600);
+	RightHandSerialCom = USerialCom::OpenComPort(bSuccess, 11, 9600);
 	if (!RightHandSerialCom || !bSuccess)
 	{
 		UE_LOG(LogHandTracking, Error, TEXT("RightHandSerialCom has failed to construct"));
@@ -31,12 +31,11 @@ void UHTFeedbackSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	FingerToTimeToSendRight.Add({ ETargetHandLocation::Ring, TimeSeconds });
 	FingerToTimeToSendRight.Add({ ETargetHandLocation::Pinky, TimeSeconds });
 
-	/* @TODO (Denis): Uncomment when left hand will be used
-	LeftHandSerialCom = USerialCom::OpenComPort(bSuccess, 4, 9600);
+	LeftHandSerialCom = USerialCom::OpenComPort(bSuccess, 6, 9600);
 	if (!LeftHandSerialCom || !bSuccess)
 	{
 		UE_LOG(LogHandTracking, Error, TEXT("LeftHandSerialCom has failed to construct"));
-	}*/
+	}
 }
 
 void UHTFeedbackSubsystem::Deinitialize()
@@ -56,6 +55,11 @@ void UHTFeedbackSubsystem::Deinitialize()
 
 void UHTFeedbackSubsystem::ApplyFeedback(const FHandFeedbackConfig& Config)
 {
+	if (!bHapticsEnabled)
+	{
+		return;
+	}
+	
 	if (Config.Hand == ETargetHand::Left || Config.Hand == ETargetHand::Both)
 	{
 		if (!LeftHandSerialCom)
@@ -89,6 +93,11 @@ void UHTFeedbackSubsystem::ApplyFeedback(const FHandFeedbackConfig& Config)
 		FingerToTimeToSendRight[Config.Location] = GetWorld()->GetTimeSeconds() + Config.Duration;
 		SendFeedback(RightHandSerialCom, Config);
 	}
+}
+
+void UHTFeedbackSubsystem::ToggleHandHaptics(bool bEnabled)
+{
+	bHapticsEnabled = bEnabled;
 }
 
 void UHTFeedbackSubsystem::SendFeedback(USerialCom* Com, const FHandFeedbackConfig& Config) const

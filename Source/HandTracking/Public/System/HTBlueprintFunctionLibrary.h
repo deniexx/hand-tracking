@@ -34,6 +34,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "HTBlueprintFunctionLibrary", meta = (WorldContext = "WorldContextObject", HidePin = "WorldContextObject"))
 	static void ApplyHandFeedback(const UObject* WorldContextObject, FHandFeedbackConfig HandFeedbackConfig);
 
+	UFUNCTION(BlueprintCallable, Category = "HTBlueprintFunctionLibrary", meta = (WorldContext = "WorldContextObject", HidePin = "WorldContextObject"))
+	static void ToggleHandFeedback(const UObject* WorldContextObject, bool bEnabled);
+
+	static bool IsInMotionControllerConfig(const UObject* WorldContextObject);
+	
 	UFUNCTION(BlueprintCallable, Category = "HTBlueprintFunctionLibrary")
 	static FString GetStringFromFinger(ETargetHandLocation Target);
 

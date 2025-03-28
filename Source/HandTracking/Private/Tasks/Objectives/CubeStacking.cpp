@@ -7,6 +7,7 @@
 #include "SphereComponent.h"
 #include "Actor/HTTaskActor.h"
 #include "Kismet/GameplayStatics.h"
+#include "System/HTBlueprintFunctionLibrary.h"
 
 void UCubeStacking::Activate_Implementation(UObject* InWorldContextManual)
 {
@@ -23,7 +24,7 @@ void UCubeStacking::Activate_Implementation(UObject* InWorldContextManual)
 		}
 	}
 
-	if (bEnablesPhysicsOnHands)
+	if (bEnablesPhysicsOnHands && !UHTBlueprintFunctionLibrary::IsInMotionControllerConfig(WorldContextManual))
 	{
 		APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(WorldContextManual, 0);
 		if (PlayerPawn != nullptr)

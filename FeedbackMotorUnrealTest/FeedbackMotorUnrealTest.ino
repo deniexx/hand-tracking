@@ -13,36 +13,41 @@ struct feedbackConfig
 const int timeDelay = 20; // in ms
 const float delayInS = timeDelay / 1000.f;
 uint8_t dummyBuffer[4];
-feedbackConfig config[5]; 
+feedbackConfig config[5];
+
+uint8_t alpha = 0;
+
 /**
 * 0 => thumb (pin 3)
 * 1 => index (pin 5)
 * 2 => middle (pin 6)
 * 3 => ring (pin 9)
 * 4 => pinky (pin 10)
-* 5 => palm (pin 11)
 */
 
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
-  config[0].pin = 3;
-  config[1].pin = 5;
-  config[2].pin = 6;
-  config[3].pin = 10;
-  config[4].pin = 11;
-  //config[5].pin = 11;
+  config[0].pin = A0;
+  config[1].pin = A1;
+  config[2].pin = A2;
+  config[3].pin = A3;
+  config[4].pin = A4;
 
-  pinMode(13, OUTPUT);
-  pinMode(11, OUTPUT);
+  pinMode(A0, OUTPUT);
+  pinMode(A1, OUTPUT);
+  pinMode(A2, OUTPUT);
+  pinMode(A3, OUTPUT);
+  pinMode(A4, OUTPUT);
+  pinMode(D6, OUTPUT);
 }
 
-void loop() {
-  // Received the sanitized data
+void processData() {
+    // Received the sanitized data
   while (Serial.available() > 0)
   {
     // Make sure we have enough bytes to read the finger data
-    if (Serial.available() < 6)
+    if (Serial.available() < 8)
     {
       break;
     }
@@ -54,6 +59,8 @@ void loop() {
     {
       // Out of range, should never happen, but better to be safe, clean out the last 4 bytes too
       Serial.readBytes(dummyBuffer, 4);
+      uint8_t padding0 = Serial.read();
+      uint8_t padding1 = Serial.read();
       continue;
     }
 
@@ -67,6 +74,10 @@ void loop() {
 
     // Overwrite the currently stored values
     config[finger].strength = strength;
+
+    // Read and remove padding
+    uint8_t padding0 = Serial.read();
+    uint8_t padding1 = Serial.read();
   }
 
   for (int i = 0; i < 5; ++i)
@@ -91,4 +102,20 @@ void loop() {
   }
 
   delay(timeDelay);
+}
+
+void test() {
+  analogWrite(config[0].pin, alpha);
+  analogWrite(config[1].pin, alpha);
+  analogWrite(config[2].pin, alpha);
+  analogWrite(config[3].pin, alpha);
+  analogWrite(config[4].pin, alpha);
+
+  ++alpha %= 255;
+  delay(20.f);
+}
+
+void loop() {
+  //test();
+  processData();
 }

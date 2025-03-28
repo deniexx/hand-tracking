@@ -54,3 +54,8 @@ void UHTResultWriterSubsystem::EndWritingTest()
 	
 	FFileHelper::SaveStringArrayToFile(DataToWriteToCSV, *FullPath);
 }
+
+bool UHTResultWriterSubsystem::IsInMotionControllerConfig()
+{
+	return Config == "MotionControllers";
+}

@@ -23,6 +23,8 @@ public:
 	void EndWriteTestTask();
 
 	void EndWritingTest();
+
+	bool IsInMotionControllerConfig();
 	
 private:
 

@@ -4,6 +4,7 @@
 #include "System/HTBlueprintFunctionLibrary.h"
 
 #include "System/HTFeedbackSubsystem.h"
+#include "System/HTResultWriterSubsystem.h"
 
 UHTFeedbackSubsystem* UHTBlueprintFunctionLibrary::GetHTFeedbackSubsystem(const UObject* WorldContextObject)
 {
@@ -24,6 +25,24 @@ void UHTBlueprintFunctionLibrary::ApplyHandFeedback(const UObject* WorldContextO
 	{
 		FeedbackSubsystem->ApplyFeedback(HandFeedbackConfig);
 	}
+}
+
+void UHTBlueprintFunctionLibrary::ToggleHandFeedback(const UObject* WorldContextObject, bool bEnabled)
+{
+	if (UHTFeedbackSubsystem* FeedbackSubsystem = GetHTFeedbackSubsystem(WorldContextObject))
+	{
+		FeedbackSubsystem->ToggleHandHaptics(bEnabled);
+	}	
+}
+
+bool UHTBlueprintFunctionLibrary::IsInMotionControllerConfig(const UObject* WorldContextObject)
+{
+	if (UHTResultWriterSubsystem* ResultWriter = WorldContextObject->GetWorld()->GetGameInstance()->GetSubsystem<UHTResultWriterSubsystem>())
+	{
+		return ResultWriter->IsInMotionControllerConfig();
+	}
+
+	return false;
 }
 
 FString UHTBlueprintFunctionLibrary::GetStringFromFinger(ETargetHandLocation Target)
