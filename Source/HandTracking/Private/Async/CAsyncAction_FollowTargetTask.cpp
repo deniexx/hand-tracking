@@ -5,7 +5,7 @@
 
 #include "SplineComponent.h"
 #include "Kismet/KismetMathLibrary.h"
-
+	
 UCAsyncAction_FollowTargetTask* UCAsyncAction_FollowTargetTask::Execute(AActor* SolutionActor,
 	USplineComponent* SplineComponent, float AcceptableDistanceDelta, const FLinearColor& GoodColor, const FLinearColor& BadColor)
 {
