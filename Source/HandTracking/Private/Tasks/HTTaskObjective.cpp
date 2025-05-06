@@ -81,6 +81,7 @@ void UHTTaskObjective::SetMaterialColor(const AHTTaskActor* TaskActor, const FVe
 	Material->SetVectorParameterValue("HologramColor", MaterialColor);
 }
 
+#if WITH_EDITOR
 void UHTTaskObjective::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
 	UObject::PostEditChangeProperty(PropertyChangedEvent);
@@ -98,6 +99,7 @@ void UHTTaskObjective::PostEditChangeProperty(struct FPropertyChangedEvent& Prop
 		}
 	}
 }
+#endif
 
 TArray<AHTTaskActor*> UHTTaskObjective::GatherTaskActors() const
 {

@@ -38,16 +38,18 @@ void UCAsyncAction_FollowTargetTask::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	// Have we ticked already this frame, if so do not do it again
 	if (LastFrameNumberWeTicked == GFrameCounter)
 	{
 		return;
 	}
-
+	
 	if (!IsValid(SolutionActor) || !bTracking)
 	{
 		return;
 	}
-
+	LastFrameNumberWeTicked = GFrameCounter;
+	
 	const FVector CurrentLocation = PrimitiveComponent->GetComponentLocation();
 	const FVector TargetLocation = SplineComponent->FindLocationClosestToWorldLocation(CurrentLocation, ESplineCoordinateSpace::World);
 	const float Distance = FVector::Dist(CurrentLocation, TargetLocation);
@@ -59,12 +61,8 @@ void UCAsyncAction_FollowTargetTask::Tick(float DeltaTime)
 	const float Alpha = FMath::Clamp(Distance / AcceptableDistanceDelta, 0.f, 1.f);
 	const FLinearColor FinalColor = UKismetMathLibrary::LinearColorLerp(GoodColor, BadColor, Alpha);
 	DynamicMaterial->SetVectorParameterValue("HologramColor", FinalColor);
-
-	const FVector FinalLocation = SplineComponent->GetLocationAtSplinePoint(
-		SplineComponent->GetNumberOfSplinePoints() - 1, ESplineCoordinateSpace::World);
 	
-	const float Distance2D = FVector::Dist(CurrentLocation, FinalLocation);
-	if (Distance2D < AcceptableDistanceDelta)
+	if (IsObjectCloseToEnd())
 	{
 		DynamicMaterial->SetVectorParameterValue("HologramColor", FColor::Green);
 		OnLocationCloseToEnd.Broadcast();
@@ -82,10 +80,10 @@ void UCAsyncAction_FollowTargetTask::Tick(float DeltaTime)
 bool UCAsyncAction_FollowTargetTask::IsObjectCloseToEnd() const
 {
 	const FVector CurrentLocation = SolutionActor->GetActorLocation();
-	const FVector TargetLocation = SplineComponent->GetLocationAtSplinePoint(SplineComponent->GetNumberOfSplinePoints(),
-		ESplineCoordinateSpace::World);
+	const FVector TargetLocation = SplineComponent->GetLocationAtSplinePoint(
+		SplineComponent->GetNumberOfSplinePoints() - 1,	ESplineCoordinateSpace::World);
 
-	return FVector::Dist2D(CurrentLocation, TargetLocation) < AcceptableDistanceDelta;
+	return FVector::Dist(CurrentLocation, TargetLocation) < AcceptableDistanceDelta;
 }
 
 void UCAsyncAction_FollowTargetTask::SetIsTracking(bool bNewValue)

@@ -34,14 +34,17 @@ struct FFingerCollisionData
 	}
 };
 
-UCLASS()
-class HANDTRACKING_API AHTHandsPawn : public APawn
+/**
+ * DEPRECATED CLASS, use the Character from OculusHandTools
+ */
+UCLASS(Deprecated)
+class HANDTRACKING_API ADEPRECATED_HTHandsPawn : public APawn
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this pawn's properties
-	AHTHandsPawn();
+	ADEPRECATED_HTHandsPawn();
 	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -49,6 +52,7 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	/** Gets the averaged controller velocities */
 	virtual void GetControllerVelocitiesAveraged(FVector& OutLeftControllerVelocity, FVector& OutRightControllerVelocity);
 
 protected:
@@ -112,22 +116,35 @@ protected:
 	FVector RightControllerVelocityRunningAverage = FVector::ZeroVector;
 
 private:
-	
+
+	/** Check if the grabbing requirements are met, I.E enough fingers are grabbing the object and the required ones are there */
 	static bool AreGrabRequirementsMet(const FFingerCollisionData& FingerCollision);
 
+	/** Traces each finger from a given hand component, and adds to the finger collision data and held actors array */
 	void TraceAndGrabFromHand(UOculusXRHandComponent* HandComponent, UMotionControllerComponent* ControllerComponent, FFingerCollisionData& FingerCollision, TArray<AActor*>& HeldActors);
+
+	/** Applies haptic feedback to a given hand and location for a given duration */
 	void DoFeedback(ETargetHand Hand, ETargetHandLocation Location, float Duration) const;
+
+	/** Traces a given finger */
 	bool TraceFinger(UOculusXRHandComponent* HandComponent, FName SocketName, const TArray<AActor*>& IgnoredActors, bool bDrawDebug, FHitResult& OutResult) const;
 
+	/** Attempts to grab an item by a given FingerCollisionData */
 	void TryGrabItem(UOculusXRHandComponent* HandComponent, UMotionControllerComponent* ControllerComponent,
 		FFingerCollisionData& FingerCollision, ETargetHandLocation Location, const FHitResult& HitResult, TArray<AActor*>& HeldActors);
 
+	/** Attempts to gran an item from a pose */
 	void TryGrabItemFromPose(UMotionControllerComponent* ControllerComponent, UOculusXRHandComponent* HandComponent, TArray<AActor*>& HeldActors);
-	
+
+	/** Tries to release an item depending on the finger collision data struct */
 	void TryReleaseItem(UOculusXRHandComponent* HandComponent, UMotionControllerComponent* ControllerComponent,
 		FFingerCollisionData& FingerCollision, TArray<AActor*>& HeldActors);
 
+	/** Logs the hand pose when an input key is down */
 	void ProcessHandLogInput();
+
+	/** Attempts to grab an item if a pinch or grab gesture is performed */
+	void TryGrabWithGesture(UOculusXRHandComponent* HandComponent, UMotionControllerComponent* ControllerComponent, TArray<AActor*>& HeldActors);
 
 private:
 

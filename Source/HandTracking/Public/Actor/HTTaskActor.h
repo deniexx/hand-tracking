@@ -10,7 +10,9 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGrabUpdated, AHTTaskActor*, TaskActor);
 
 /**
- * 
+ * Default class all Task Actors should inherit from.
+ * Provides delegates for when an object has been grabbed or dropped,
+ * Includes tags to identify the actor and an optional tag in case it is needed
  */
 UCLASS()
 class HANDTRACKING_API AHTTaskActor : public AInteractable
@@ -23,6 +25,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HTTaskActor")
 	FGameplayTag TaskActorTag;
 
+	/** An option tag, usually signifying a target actor to be used in any way required by the Objective */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HTTaskActor")
 	FGameplayTag OptionalTag;
 	
@@ -41,5 +44,6 @@ public:
 
 private:
 
+	/** Checks for if a grab pose is available for the grabbing hand */
 	bool HasAnyGrabPoses() const;
 };

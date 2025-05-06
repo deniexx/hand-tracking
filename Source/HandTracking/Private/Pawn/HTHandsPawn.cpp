@@ -37,7 +37,7 @@ static FAutoConsoleVariableRef CVarProcessHandLogInput(
 );
 
 // Sets default values
-AHTHandsPawn::AHTHandsPawn()
+ADEPRECATED_HTHandsPawn::ADEPRECATED_HTHandsPawn()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -89,7 +89,7 @@ AHTHandsPawn::AHTHandsPawn()
 }
 
 // Called when the game starts or when spawned
-void AHTHandsPawn::BeginPlay()
+void ADEPRECATED_HTHandsPawn::BeginPlay()
 {
 	Super::BeginPlay();
 	
@@ -97,7 +97,7 @@ void AHTHandsPawn::BeginPlay()
 }
 
 // Called every frame
-void AHTHandsPawn::Tick(float DeltaTime)
+void ADEPRECATED_HTHandsPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
@@ -112,10 +112,14 @@ void AHTHandsPawn::Tick(float DeltaTime)
 	 * Either we flip this around, depending on the dominant hand of the user, or introduce a way to track previously grabbed objects, that way we can
 	 * filter for those and update grabbing properly, which is not ideal, maybe adding a small delay would help, but unsure on how to fix this issue currently
 	 * that is consistent and feels good, other than switching over to pinching gesturees to grab objects, or multiple different gestures to grab objects
-	 */
+	 
 	TraceAndGrabFromHand(OculusXRHandRight, MotionControllerRight, FingerCollisionRight, HeldActorsRightHand);
 	TraceAndGrabFromHand(OculusXRHandLeft, MotionControllerLeft, FingerCollisionLeft, HeldActorsLeftHand);
+	*/
 
+	TryGrabWithGesture(OculusXRHandRight, MotionControllerRight, HeldActorsRightHand);
+	TryGrabWithGesture(OculusXRHandLeft, MotionControllerLeft, HeldActorsLeftHand);
+	
 	UHTBlueprintFunctionLibrary::LowPassFilter_RollingAverage(RightControllerVelocityRunningAverage,
 		MotionControllerRight->GetComponentVelocity(), RightControllerVelocityRunningAverage, VelocitySamples);
 
@@ -123,25 +127,10 @@ void AHTHandsPawn::Tick(float DeltaTime)
 		MotionControllerLeft->GetComponentVelocity(), LeftControllerVelocityRunningAverage, VelocitySamples);
 }
 
-void AHTHandsPawn::TraceAndGrabFromHand(UOculusXRHandComponent* HandComponent,
+void ADEPRECATED_HTHandsPawn::TraceAndGrabFromHand(UOculusXRHandComponent* HandComponent,
 	UMotionControllerComponent* ControllerComponent, FFingerCollisionData& FingerCollision, TArray<AActor*>& HeldActors)
 {
-	if (HandComponent->MeshType == EOculusXRHandType::HandRight)
-	{
-		if (CameraHandInputRight->IsPinching() || CameraHandInputRight->IsInGrabPose())
-		{
-			TryGrabItemFromPose(ControllerComponent, HandComponent, HeldActors);
-		}
-	}
-	else
-	{
-		if (CameraHandInputLeft->IsPinching() || CameraHandInputLeft->IsInGrabPose())
-		{
-			TryGrabItemFromPose(ControllerComponent, HandComponent, HeldActors);
-		}		
-	}
-	
-	/*TArray<AActor*> IgnoredActors = { this };
+	TArray<AActor*> IgnoredActors = { this };
 	const bool bDrawDebug = GDebugFingerTrace > 0;
 	ETargetHand TargetHand = HandComponent->MeshType == EOculusXRHandType::HandLeft ? ETargetHand::Left : ETargetHand::Right;
 
@@ -198,32 +187,32 @@ void AHTHandsPawn::TraceAndGrabFromHand(UOculusXRHandComponent* HandComponent,
 		{
 			TryReleaseItem(HandComponent, ControllerComponent, FingerCollision, HeldActors);
 		}
-	}*/
+	}
 }
 
 // Called to bind functionality to input
-void AHTHandsPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void ADEPRECATED_HTHandsPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	
 }
 
-void AHTHandsPawn::GetControllerVelocitiesAveraged(FVector& OutLeftControllerVelocity,
+void ADEPRECATED_HTHandsPawn::GetControllerVelocitiesAveraged(FVector& OutLeftControllerVelocity,
 	FVector& OutRightControllerVelocity)
 {
 	OutLeftControllerVelocity = LeftControllerVelocityRunningAverage;
 	OutRightControllerVelocity = RightControllerVelocityRunningAverage;
 }
 
-bool AHTHandsPawn::TraceFinger(UOculusXRHandComponent* HandComponent, FName SocketName, const TArray<AActor*>& IgnoredActors, bool bDrawDebug, FHitResult& OutResult) const
+bool ADEPRECATED_HTHandsPawn::TraceFinger(UOculusXRHandComponent* HandComponent, FName SocketName, const TArray<AActor*>& IgnoredActors, bool bDrawDebug, FHitResult& OutResult) const
 {
 	const EDrawDebugTrace::Type DrawDebug = bDrawDebug ? EDrawDebugTrace::ForOneFrame : EDrawDebugTrace::None;
 	const FVector TraceStart = HandComponent->GetSocketLocation(SocketName);
 	return UKismetSystemLibrary::SphereTraceSingleForObjects(this, TraceStart, TraceStart, TraceSphereRadius, TraceChannels, false, IgnoredActors, DrawDebug, OutResult, true);
 }
 
-void AHTHandsPawn::DoFeedback(ETargetHand Hand, ETargetHandLocation Location, float Duration) const
+void ADEPRECATED_HTHandsPawn::DoFeedback(ETargetHand Hand, ETargetHandLocation Location, float Duration) const
 {
 	FHandFeedbackConfig Config;
 	Config.Hand = Hand;
@@ -233,7 +222,7 @@ void AHTHandsPawn::DoFeedback(ETargetHand Hand, ETargetHandLocation Location, fl
 	UHTBlueprintFunctionLibrary::ApplyHandFeedback(this, Config);
 }
 
-bool AHTHandsPawn::AreGrabRequirementsMet(const FFingerCollisionData& FingerCollision)
+bool ADEPRECATED_HTHandsPawn::AreGrabRequirementsMet(const FFingerCollisionData& FingerCollision)
 {
 	int32 RequiredPointsOfContact = 3;
 	uint8 RequiredFingers = 0;
@@ -249,7 +238,7 @@ bool AHTHandsPawn::AreGrabRequirementsMet(const FFingerCollisionData& FingerColl
 	return NumFingers >= RequiredPointsOfContact && HAS_REQUIRED_BITS(RequiredFingers, FingerCollision.FingersColliding);
 }
 
-void AHTHandsPawn::TryGrabItem(UOculusXRHandComponent* HandComponent, UMotionControllerComponent* ControllerComponent,
+void ADEPRECATED_HTHandsPawn::TryGrabItem(UOculusXRHandComponent* HandComponent, UMotionControllerComponent* ControllerComponent,
                                FFingerCollisionData& FingerCollision, ETargetHandLocation Location, const FHitResult& HitResult, TArray<AActor*>& HeldActors)
 {
 	AActor* HitActor = HitResult.GetActor();
@@ -267,7 +256,6 @@ void AHTHandsPawn::TryGrabItem(UOculusXRHandComponent* HandComponent, UMotionCon
 	
 	if (AreGrabRequirementsMet(FingerCollision))
 	{
-		/** @TODO (Denis): Check if the other hand is already grabbing the object and if it is, remove it from the array */
 		/** @NOTE (Denis): Currently fixed by a hack... */
 		TArray<AActor*> OtherHeldActors = HandComponent->MeshType == EOculusXRHandType::HandRight ? HeldActorsRightHand : HeldActorsLeftHand;
 		if (OtherHeldActors.Num() > 0)
@@ -286,13 +274,16 @@ void AHTHandsPawn::TryGrabItem(UOculusXRHandComponent* HandComponent, UMotionCon
 	}
 }
 
-void AHTHandsPawn::TryGrabItemFromPose(UMotionControllerComponent* ControllerComponent, UOculusXRHandComponent* HandComponent, TArray<AActor*>& HeldActors)
+void ADEPRECATED_HTHandsPawn::TryGrabItemFromPose(UMotionControllerComponent* ControllerComponent, UOculusXRHandComponent* HandComponent, TArray<AActor*>& HeldActors)
 {
 	const bool bDrawDebug = GDebugFingerTrace > 0;
 	const EDrawDebugTrace::Type DrawDebug = bDrawDebug ? EDrawDebugTrace::ForOneFrame : EDrawDebugTrace::None;
+
 	const FVector TraceStart = HandComponent->GetSocketLocation(FName("Palm"));
+
 	TArray<AActor*> IgnoredActors = { this };
 	FHitResult OutResult;
+	
 	if (UKismetSystemLibrary::SphereTraceSingleForObjects(this, TraceStart, TraceStart, 12,
 		TraceChannels, false, IgnoredActors, DrawDebug, OutResult, true))
 	{
@@ -304,7 +295,7 @@ void AHTHandsPawn::TryGrabItemFromPose(UMotionControllerComponent* ControllerCom
 	}
 }
 
-void AHTHandsPawn::TryReleaseItem(UOculusXRHandComponent* HandComponent,  UMotionControllerComponent* ControllerComponent,
+void ADEPRECATED_HTHandsPawn::TryReleaseItem(UOculusXRHandComponent* HandComponent,  UMotionControllerComponent* ControllerComponent,
                                   FFingerCollisionData& FingerCollision, TArray<AActor*>& HeldActors)
 {
 	// If grab requirements are not met, drop the items
@@ -321,7 +312,7 @@ void AHTHandsPawn::TryReleaseItem(UOculusXRHandComponent* HandComponent,  UMotio
 	}
 }
 
-void AHTHandsPawn::ProcessHandLogInput()
+void ADEPRECATED_HTHandsPawn::ProcessHandLogInput()
 {
 	/** Check if the appropriate key is pressed and log the hand pose in the editor with a label of which hand */
 	APlayerController* PlayerController = GetController<APlayerController>();
@@ -344,3 +335,20 @@ void AHTHandsPawn::ProcessHandLogInput()
 	
 }
 
+void ADEPRECATED_HTHandsPawn::TryGrabWithGesture(UOculusXRHandComponent* HandComponent, UMotionControllerComponent* ControllerComponent, TArray<AActor*>& HeldActors)
+{
+	if (HandComponent->MeshType == EOculusXRHandType::HandRight)
+	{
+		if (CameraHandInputRight->IsPinching() || CameraHandInputRight->IsInGrabPose())
+		{
+			TryGrabItemFromPose(ControllerComponent, HandComponent, HeldActors);
+		}
+	}
+	else
+	{
+		if (CameraHandInputLeft->IsPinching() || CameraHandInputLeft->IsInGrabPose())
+		{
+			TryGrabItemFromPose(ControllerComponent, HandComponent, HeldActors);
+		}		
+	}
+}

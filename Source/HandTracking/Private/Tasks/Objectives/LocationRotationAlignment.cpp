@@ -19,6 +19,8 @@ void ULocationRotationAlignment::Activate_Implementation(UObject* InWorldContext
 	TArray<AHTTaskActor*> TaskActors = GatherTaskActors();
 	TArray<AHTTaskActor*> SolutionActors;
 	TArray<AHTTaskActor*> TargetActors;
+
+	// Finds solutions and targets
 	for (AHTTaskActor* TaskActor : TaskActors)
 	{
 		if (TaskActor->TaskActorTag.MatchesAnyExact(SolutionObjects))
@@ -32,6 +34,7 @@ void ULocationRotationAlignment::Activate_Implementation(UObject* InWorldContext
 		}
 	}
 
+	//  Maps solutions to targets
 	for (auto SolutionActor : SolutionActors)
 	{
 		for (auto TargetActor : TargetActors)

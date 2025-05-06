@@ -18,6 +18,7 @@ void UFollowTarget::Activate_Implementation(UObject* InWorldContextManual)
 	
 	for (auto Actor : Actors)
 	{
+		// If this is the solution object, identified by tag, setup listeners to the delegates
 		if (SolutionObjectTag.MatchesTagExact(Actor->TaskActorTag))
 		{
 			SolutionObject = Actor;
@@ -29,6 +30,7 @@ void UFollowTarget::Activate_Implementation(UObject* InWorldContextManual)
 				PrimitiveComponent->OnComponentHit.AddDynamic(this, &ThisClass::OnSolutionObjectHit);
 			}
 		}
+		// Otherwise if it is the spline actor, get its spline component
 		else if (SplineActorTag.MatchesTagExact(Actor->TaskActorTag))
 		{
 			SplineActor = Actor;
@@ -44,8 +46,12 @@ void UFollowTarget::Activate_Implementation(UObject* InWorldContextManual)
 
 void UFollowTarget::Complete_Implementation()
 {
-	const FVector EndSplineLocation = SplineComponent->GetLocationAtSplinePoint(SplineComponent->GetNumberOfSplinePoints(), ESplineCoordinateSpace::World);
-	const float Distance = FVector::Dist2D(EndSplineLocation, SolutionObject->GetActorLocation());
+	/** -1 is not required on GetNumberOfSplinePoints, as spline component itself clamps the value in a valid range,
+	  but has been added anyway, better safe than sorry */
+	const FVector EndSplineLocation = SplineComponent->GetLocationAtSplinePoint(
+		SplineComponent->GetNumberOfSplinePoints() - 1, ESplineCoordinateSpace::World);
+	
+	const float Distance = FVector::Dist(EndSplineLocation, SolutionObject->GetActorLocation());
 
 	if (Distance > AcceptableDistanceDelta)
 	{

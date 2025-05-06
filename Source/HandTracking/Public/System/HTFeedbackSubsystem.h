@@ -11,7 +11,7 @@ class USerialCom;
 
 
 /**
- * 
+ * The subsystem handling hand haptics
  */
 UCLASS()
 class HANDTRACKING_API UHTFeedbackSubsystem : public UGameInstanceSubsystem
@@ -31,11 +31,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "HTFeedbackSubsystem")
 	void ApplyFeedback(const FHandFeedbackConfig& Config);
 
+	/**
+	 * Toggles whether the hand haptics are enabled
+	 * @param bEnabled TRUE - enabled, FALSE - disabled
+	 */
 	UFUNCTION(BlueprintCallable, Category = "HTFeedbackSubsystem")
 	void ToggleHandHaptics(bool bEnabled);
 
 private:
 
+	/** Writes the data to the specified serial com */
 	void SendFeedback(USerialCom* Com, const FHandFeedbackConfig& Config) const;
 	
 private:

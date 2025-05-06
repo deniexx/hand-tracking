@@ -14,6 +14,8 @@ void USortation::Activate_Implementation(UObject* InWorldContextManual)
 	const int32 HalfObjects = NumberOfSortables / 2;
 
 	UWorld* World = WorldContextManual->GetWorld();
+
+	// Spawn appropriate number of balls to sort
 	for (int32 Idx = 0; Idx < NumberOfSortables - 1; ++Idx)
 	{
 		AHTTaskActor* SpawnedActor = World->SpawnActorDeferred<AHTTaskActor>(ObjectiveActors[2].ActorTemplate,
@@ -107,7 +109,8 @@ void USortation::OnSortableDropped(AHTTaskActor* TaskActor)
 	const FVector TaskActorLocation = TaskActor->GetActorLocation();
 	float ClosestTarget = 50000000.f;
 	AHTTaskActor* ClosestTargetActor = nullptr;
-	
+
+	// Finds closest target to the drop location
 	for (auto Target : TargetActors)
 	{
 		const FVector TargetLocation = Target->GetActorLocation();
@@ -119,6 +122,7 @@ void USortation::OnSortableDropped(AHTTaskActor* TaskActor)
 		}
 	}
 
+	// If there was a closest target, and it is within range, check if it matches the tag and update values appropriately 
 	if (IsValid(ClosestTargetActor) && ClosestTarget < SortationAcceptanceRange)
 	{
 		if (ClosestTargetActor->TaskActorTag.MatchesTagExact(TaskActor->OptionalTag))
@@ -130,6 +134,7 @@ void USortation::OnSortableDropped(AHTTaskActor* TaskActor)
 			++ObjectsSortedIncorrectly;
 		}
 
+		// Disable grabbing and scale down, after that destroy the actor
 		TaskActor->SetCanBeGrabbed(false);
 		UCAsyncAction_TweenValue* TweenValue = UCAsyncAction_TweenValue::Execute(WorldContextManual, TaskActor,
 			ClosestTargetActor, 0.f, 1.f, 1.f);

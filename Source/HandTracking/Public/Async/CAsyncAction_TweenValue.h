@@ -10,7 +10,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnTweenUpdate, AActor*, TargetAc
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTweenFinished, AActor*, TargetActor);
 
 /**
- * 
+ * Smoothly interpolates a value between 2 other values
  */
 UCLASS()
 class HANDTRACKING_API UCAsyncAction_TweenValue : public UCTickableAsyncAction
@@ -19,6 +19,7 @@ class HANDTRACKING_API UCAsyncAction_TweenValue : public UCTickableAsyncAction
 
 public:
 
+	/** Create and Activates the action */
 	UFUNCTION(BlueprintCallable, Category = "Async Task", meta = (DisplayName = "TweenValue", WorldContext = "WorldContextObject", HidePin = "WorldContextObject"))
 	static UCAsyncAction_TweenValue* Execute(UObject* WorldContextObject, AActor* TargetActor, AActor* OptionalActor, float StartValue, float EndValue, float Speed);
 

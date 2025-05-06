@@ -24,6 +24,8 @@ void UCubeStacking::Activate_Implementation(UObject* InWorldContextManual)
 		}
 	}
 
+	/* @HACK: Hacky solution to fix a problem where objects would bounce away from motion controllers due to collision,
+	 * Motion controllers enable and disable their collision when processing input in the hands character */
 	if (bEnablesPhysicsOnHands && !UHTBlueprintFunctionLibrary::IsInMotionControllerConfig(WorldContextManual))
 	{
 		APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(WorldContextManual, 0);
@@ -107,7 +109,8 @@ void UCubeStacking::OnObjectiveActorDropped(AHTTaskActor* TaskActor)
 	FVector Origin, BoxExtent;
 	TaskActor->GetActorBounds(false, Origin, BoxExtent);
 	FCollisionShape BoxShape = FCollisionShape::MakeBox(BoxExtent / 2.f);
-	
+
+	/** If snapping objects, snap them appropriately by doing a box check */
 	if (bSnapToGround)
 	{
 		FHitResult Hit;
@@ -126,13 +129,15 @@ void UCubeStacking::OnObjectiveActorDropped(AHTTaskActor* TaskActor)
 			}
 		}
 	}
-	
+
+	/** Check if appropriate arrangement has been met */
 	TArray<AHTTaskActor*> Actors = GatherTaskActors();
 
 	int32 Samples = 0;
 	float TotalDelta = 0.f;
 	CubesStackedCorrectly = 0;
 	CubesStackedIncorrectly = 0;
+	
 	for (AHTTaskActor* Actor : Actors)
 	{
 		float ZMultiplier = 1.f;

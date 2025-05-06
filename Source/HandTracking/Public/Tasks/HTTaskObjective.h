@@ -46,7 +46,7 @@ enum class EObjectiveState : uint8
 };
 
 /**
- * 
+ * The base class for task objectives
  */
 UCLASS(Abstract, BlueprintType, Blueprintable, DefaultToInstanced, EditInlineNew)
 class HANDTRACKING_API UHTTaskObjective : public UObject
@@ -54,28 +54,42 @@ class HANDTRACKING_API UHTTaskObjective : public UObject
 	GENERATED_BODY()
 	
 public:
-
+	/**
+	 * Actives the objective, starts writing a test task on the result writer subsystem,
+	 * updates the state, spawns the task actors and broadcast the started event
+	 * @param InWorldContextManual The object to get the world from
+	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Objective")
 	void Activate(UObject* InWorldContextManual);
 
+	/**
+	 * Completes the objective, updating the state, ending writing test results,
+	 * and broadcast an event, CleanUp MUST be called manually
+	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "Objective")
 	void Complete();
-	
+
+	/** Gets the current objective state */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Objective")
 	EObjectiveState GetObjectiveState() const;
 
+	/** Gets the current tracked data */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Objective")
 	const FString& GetTrackedData() const;
 
+	/** Checks if the objective is complete */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Objective")
 	bool IsComplete() const;
 
+	/** Checks if the objective is in progress */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Objective")
 	bool IsInProgress() const;
 
+	/** Checks if the objective is waiting to start, I.E, not complete and not in progress */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Objective")
 	bool IsWaitingToStart() const;
 
+	/** Cleans up after itself, by destroying spawned actors */
 	UFUNCTION(BlueprintCallable, Category = "Objective")
 	virtual void CleanUp();
 
@@ -95,16 +109,19 @@ public:
 	
 protected:
 
+	/** Gets all actors that have a matching tag to any of the task actor tags */
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Objective")
 	TArray<AHTTaskActor*> GatherTaskActors() const;
 
+	/** Spawns the task actors */
 	UFUNCTION(BlueprintCallable, Category = "Objective")
 	void SpawnTaskActors();
 
+	/** Finds an unused index from an array */
 	static int32 GetUnusedIndex(TArray<int32>& UsedIndices, int32 MaxNumber);
 
 protected:
-
+	
 	UHTResultWriterSubsystem* GetResultWriterSubsystem() const;
 	
 	virtual void SendResultsToSubsystem();

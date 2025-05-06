@@ -32,6 +32,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Objective")
 	float MinimumAcceptableDistance = 10.f;
 
+	/** Used for writing results */
 	UPROPERTY(EditAnywhere, Category = "Objective")
 	TMap<FGameplayTag, FString> TagsToNames;
 	

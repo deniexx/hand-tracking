@@ -7,7 +7,7 @@
 #include "CTickableAsyncAction.generated.h"
 
 /**
- * 
+ * A base class for all tickable async actions
  */
 UCLASS()
 class HANDTRACKING_API UCTickableAsyncAction : public UCancellableAsyncAction, public FTickableGameObject

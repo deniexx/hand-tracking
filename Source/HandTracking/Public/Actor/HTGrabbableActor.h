@@ -1,5 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+// Currently not used!!
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -7,14 +9,14 @@
 #include "Interfaces/HTGrabbable.h"
 #include "HTGrabbableActor.generated.h"
 
-UCLASS()
-class HANDTRACKING_API AHTGrabbableActor : public AActor, public IHTGrabbable
+UCLASS(Deprecated)
+class HANDTRACKING_API ADEPRECATED_HTGrabbableActor : public AActor, public IHTGrabbable
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	AHTGrabbableActor();
+	ADEPRECATED_HTGrabbableActor();
 
 	/** IHTGrabbale Interface Start */
 	virtual void Grab_Implementation(APawn* GrabInstigator, UMotionControllerComponent* GrabbingMotionController) override;

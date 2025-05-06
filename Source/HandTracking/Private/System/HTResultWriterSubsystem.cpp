@@ -31,6 +31,7 @@ void UHTResultWriterSubsystem::EndWriteTestTask()
 
 void UHTResultWriterSubsystem::EndWritingTest()
 {
+	// Find Results folder, if it does not exists create it
 	const FString Path = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectSavedDir(), FString("Results")));
 	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
 	if (!PlatformFile.DirectoryExists(*Path))
@@ -38,6 +39,7 @@ void UHTResultWriterSubsystem::EndWritingTest()
 		PlatformFile.CreateDirectory(*Path);
 	}
 
+	// Find the correct participant number, based on the number of files in the directory
 	TArray<FString> Results;
 	PlatformFile.FindFiles(Results, *Path, TEXT(".csv"));
 	int32 ParticipantNumber = 0;
@@ -46,7 +48,8 @@ void UHTResultWriterSubsystem::EndWritingTest()
 	{
 		ParticipantNumber = FMath::Floor((float)(Results.Num()) / 3.f);
 	}
-	
+
+	// Prepare and write to file
 	const FString FileName = FString::Printf(TEXT("Participant%d_%s.csv"), ParticipantNumber, *Config);
 	const FString FullPath = FPaths::Combine(Path, FileName);
 
