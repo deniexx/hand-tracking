@@ -20,12 +20,12 @@ enum class ETargetHand : uint8
 UENUM(meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
 enum class ETargetHandLocation : uint8
 {
-	Thumb = BIT(0),
-	Index = BIT(1),
-	Middle = BIT(2),
-	Ring = BIT(3),
-	Pinky = BIT(4),
-	Palm = BIT(5)
+	Thumb = 0,
+	Index,
+	Middle,
+	Ring,
+	Pinky,
+	Palm
 };
 ENUM_CLASS_FLAGS(ETargetHandLocation);
 

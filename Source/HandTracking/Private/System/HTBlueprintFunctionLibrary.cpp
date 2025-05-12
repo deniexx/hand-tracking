@@ -73,3 +73,48 @@ void UHTBlueprintFunctionLibrary::LowPassFilter_RollingAverage(const FVector& La
 	NewAverage -= NewAverage / NumSamples;
 	NewAverage += NewSample / NumSamples;
 }
+
+void UHTBlueprintFunctionLibrary::GenerateRandomNumbersArray(TArray<int32>& OutNumbers, int32 Amount)
+{
+	OutNumbers.Empty();
+
+	bool Done = false;
+	while (!Done)
+	{
+		const int32 Number = FMath::RandRange(1, 9);
+
+		if (OutNumbers.Contains(Number))
+		{
+			continue;
+		}
+
+		OutNumbers.Add(Number);
+		Done = OutNumbers.Num() == Amount;
+	}
+}
+
+void UHTBlueprintFunctionLibrary::SendFeedbackBasedOnArray(const UObject* WorldContextObject,
+	int32 Number, float Duration)
+{
+	for (int32 Idx = 0; Idx < Number; ++Idx)
+	{
+		if (Idx < 5)
+		{
+			FHandFeedbackConfig Config;
+			Config.Duration = Duration;
+			Config.Hand = ETargetHand::Left;
+			Config.Location = (ETargetHandLocation)(Idx);
+			Config.NormalizedStrength = 1.f;
+			ApplyHandFeedback(WorldContextObject, Config);
+		}
+		else
+		{
+			FHandFeedbackConfig Config;
+			Config.Duration = Duration;
+			Config.Hand = ETargetHand::Right;
+			Config.Location = (ETargetHandLocation)(Idx - 5);
+			Config.NormalizedStrength = 1.f;
+			ApplyHandFeedback(WorldContextObject, Config);
+		}
+	}
+}

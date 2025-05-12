@@ -39,7 +39,6 @@ void setup() {
   pinMode(A2, OUTPUT);
   pinMode(A3, OUTPUT);
   pinMode(A4, OUTPUT);
-  pinMode(D6, OUTPUT);
 }
 
 void processData() {
@@ -105,11 +104,11 @@ void processData() {
 }
 
 void test() {
-  analogWrite(config[0].pin, alpha);
-  analogWrite(config[1].pin, alpha);
-  analogWrite(config[2].pin, alpha);
-  analogWrite(config[3].pin, alpha);
-  analogWrite(config[4].pin, alpha);
+  //analogWrite(config[0].pin, alpha);
+  //analogWrite(config[1].pin, alpha);
+  //analogWrite(config[2].pin, alpha);
+  //analogWrite(config[3].pin, alpha);
+  //analogWrite(config[4].pin, alpha);
 
   ++alpha %= 255;
   delay(20.f);

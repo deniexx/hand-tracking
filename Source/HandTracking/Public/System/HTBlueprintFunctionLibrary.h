@@ -68,4 +68,10 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "HTBlueprintFunctionLibrary")
 	static void LowPassFilter_RollingAverage(const FVector& LastAverage, const FVector& NewSample, FVector& NewAverage, const int32 NumSamples = 10);
+
+	UFUNCTION(BlueprintCallable, Category = "HTBlueprintFunctionLibrary")
+	static void GenerateRandomNumbersArray(TArray<int32>& OutNumbers, int32 Amount = 4);
+
+	UFUNCTION(BlueprintCallable, Category = "HTBlueprintFunctionLibrary", meta = (WorldContext = "WorldContextObject", HidePin = "WorldContextObject"))
+	static void SendFeedbackBasedOnArray(const UObject* WorldContextObject, int32 Number, float Duration = 1.f);
 };
